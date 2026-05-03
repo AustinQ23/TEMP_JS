@@ -12,10 +12,10 @@ function parseResult(code) {
   return { ok: m.succeeded(), message: m.failed() ? m.message : '' };
 }
 
-test('valid: simple function (no semicolons)', () => {
+test('valid: simple function with if-else and return', () => {
   const code = `
-fn check_even(num: int) -> bool {
-    if num % 2 == 0 {
+fn check_even(n) {
+    if n % 2 == 0 {
         return true
     } else {
         return false

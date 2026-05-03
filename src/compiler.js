@@ -15,7 +15,7 @@ export function compile(source, outputType = 'js') {
   }
 
   // run AST-based analyzer
-  const semErrs = analyze(ast, source);
+  const semErrs = analyze(ast);
   if (semErrs.length) {
     return { result: null, diagnostics: semErrs.map(e => ({ severity: 'error', message: e.message })) };
   }

@@ -1,4 +1,22 @@
+fn add(x, y) {
+    return x + y
+}
+
 fn main() {
-    let x = 2 + 3
-    print(x)
+    let a = 10
+    let b = 3
+    mut result = add(a, b)
+    print(result)
+
+    result = result * 2
+    print(result)
+
+    let greeting = "Hello"
+    let name = "World"
+    print(greeting + " " + name)
+
+    let flag = result > 10
+    if flag {
+        print(result)
+    }
 }

@@ -42,8 +42,10 @@ function emitStmt(stmt, level=0) {
       return stmt.expr ? `${indent(level)}return ${emitExpr(stmt.expr)};` : `${indent(level)}return;`;
     case 'Break':
       return `${indent(level)}break;`;
+    case 'Block':
+      return stmt.body.map(s => emitStmt(s, level)).join('\n');
     default:
-      throw new Error(`Unhandled stmt kind ${stmt.type}`);
+      return `${indent(level)}${emitExpr(stmt)};`;
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "name": "cmsi-3802",
+  "name": "temp_js",
   "version": "1.0.0",
   "description": "",
   "main": "src/temp_js.js",
@@ -8,7 +8,7 @@
   },
   "type": "module",
   "scripts": {
-    "test": "node --test test/grammar.test.js"
+    "test": "node --test test/compiler.test.js test/grammar.test.js test/analyzer.test.js test/optimizer.test.js test/generator.test.js"
   },
   "author": "Quinn Austin, Colin Bajo-Smith, Max Lehmann",
   "license": "ISC",

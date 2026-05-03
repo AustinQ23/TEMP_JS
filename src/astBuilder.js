@@ -22,7 +22,7 @@ semantics.addOperation('ast', {
 
   FuncDecl(_fn, name, _open, params, _close, _openb, stmts, _closeb) {
     const pname = name.ast().name;
-    const paramsArr = params.children.length === 0 ? [] : params.children.map(c => c.ast());
+    const paramsArr = params.asIteration().children.map(c => c.ast());
     const body = stmts.children.map(s => s.ast());
     return n('FunctionDecl', { name: pname, params: paramsArr, body });
   },
@@ -87,7 +87,7 @@ semantics.addOperation('ast', {
   Exp6_power(left, _op, right) { return n('Binary', { op: '**', left: left.ast(), right: right.ast() }); },
   Exp6(expr) { return expr.ast(); },
   Exp7_call(id, _open, args, _close) {
-    const argList = args.children.length ? args.children[0].children.map(c => c.ast()) : [];
+    const argList = args.asIteration().children.map(c => c.ast());
     return n('Call', { callee: id.ast().name, args: argList });
   },
   Exp7_id(id) { return id.ast(); },
