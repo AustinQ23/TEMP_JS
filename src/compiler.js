@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { buildAST } from './core.js';
 import { analyze } from './analyzer.js';
 import { optimize } from './optimizer.js';
