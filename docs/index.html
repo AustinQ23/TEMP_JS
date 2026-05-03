@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEMP_JS Programming Language</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>TEMP_JS</h1>
+        <p>A lightweight, dynamic language built for clarity and speed.</p>
+        <a href="https://github.com/YOUR-GITHUB-USERNAME/CMSI-3802" class="btn">View on GitHub</a>
+    </header>
+
+    <div class="container">
+        <section id="story">
+            <h2>The Story of TEMP_JS</h2>
+            <p></section>
+
+        <section id="examples">
+            <h2>Example Programs</h2>
+            <p>Here are five complete programs covering every syntactic form in TEMP_JS. Try running them or modifying the code!</p>
+
+            <h3>1. Variables, Math, and Printing</h3>
+            <p>Showcasing variable declarations, mutability, mathematical operations, and the print statement.</p>
+            <textarea id="code1" class="code-editor" spellcheck="false" rows="6">
+let greeting = "Hello, TEMP_JS!"
+mut counter = 10
+counter = counter * 2 + 5
+print(greeting)
+print(counter)</textarea>
+            <button class="btn run-btn" onclick="runCode('code1', 'out1')">Run Code</button>
+            <pre id="out1" class="output hidden"></pre>
+
+            <h3>2. Functions and Control Flow</h3>
+            <p>Demonstrating function declarations, logical operators, and if/else branching.</p>
+            <textarea id="code2" class="code-editor" spellcheck="false" rows="10">
+fn check_eligibility(age) {
+    if age >= 18 && age < 65 {
+        return true
+    } else {
+        return false
+    }
+}
+let can_vote = check_eligibility(21)
+print(can_vote)</textarea>
+            <button class="btn run-btn" onclick="runCode('code2', 'out2')">Run Code</button>
+            <pre id="out2" class="output hidden"></pre>
+
+            <h3>3. Arrays and the For-In Loop</h3>
+            <p>Highlighting array creation and iterating through elements using the `for...in` syntax.</p>
+            <textarea id="code3" class="code-editor" spellcheck="false" rows="9">
+let numbers = [10, 20, 30, 40]
+mut sum = 0
+
+for n in numbers {
+    sum = sum + n
+}
+
+print(sum)</textarea>
+            <button class="btn run-btn" onclick="runCode('code3', 'out3')">Run Code</button>
+            <pre id="out3" class="output hidden"></pre>
+
+            <h3>4. While Loops, Index Assignment, and Break</h3>
+            <p>Using while loops, modifying specific array indices, and breaking out of loops early.</p>
+            <textarea id="code4" class="code-editor" spellcheck="false" rows="11">
+mut data = [1, 2, 3, 4]
+mut i = 0
+
+while i < 4 {
+    data[i] = data[i] ** 2
+    if data[i] > 10 {
+        break
+    }
+    i = i + 1
+}</textarea>
+            <button class="btn run-btn" onclick="runCode('code4', 'out4')">Run Code</button>
+            <pre id="out4" class="output hidden"></pre>
+
+            <h3>5. The Kitchen Sink (Recursion & Arrays)</h3>
+            <p>A recursive function mixed with unary operators to show off the grammar's flexibility.</p>
+            <textarea id="code5" class="code-editor" spellcheck="false" rows="11">
+fn factorial(n) {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+let result = factorial(5)
+let is_valid = !(result == 0)
+print(is_valid)</textarea>
+            <button class="btn run-btn" onclick="runCode('code5', 'out5')">Run Code</button>
+            <pre id="out5" class="output hidden"></pre>
+        </section>
+
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026 TEMP_JS Team. Built for CMSI-3802.</p>
+    </footer>
+
+    <script type="module">
+        import { compile } from './tempjs.bundle.js';
+
+        window.runCode = function(codeId, outId) {
+            const codeText = document.getElementById(codeId).value;
+            const outputDiv = document.getElementById(outId);
+            
+            outputDiv.classList.remove('hidden');
+            outputDiv.innerText = "Compiling...";
+            outputDiv.style.color = "inherit";
+            outputDiv.style.borderColor = "#ccc";
+
+            // 1. Run the compiler pipeline
+            const { result: compiledJS, diagnostics } = compile(codeText, 'js');
+
+            // 2. Handle Errors
+            if (diagnostics && diagnostics.length > 0) {
+                outputDiv.style.color = "#d63031";
+                outputDiv.style.borderColor = "#d63031";
+                const errorMessages = diagnostics.map(d => " - " + d.message).join("\n");
+                outputDiv.innerText = "❌ Compilation Error:\n\n" + errorMessages;
+                return;
+            }
+
+            // 3. Execute
+            try {
+                let outputBuffer = "";
+                
+                // Intercept print
+                const originalLog = console.log;
+                console.log = (...args) => {
+                    outputBuffer += args.join(" ") + "\n";
+                };
+
+                eval(compiledJS);
+
+                console.log = originalLog;
+
+                outputDiv.style.color = "#00b894";
+                outputDiv.style.borderColor = "#00b894";
+                outputDiv.innerText = "✅ Success!\n\nOutput:\n" + (outputBuffer || "(No output)");
+
+            } catch (e) {
+                outputDiv.style.color = "#d63031";
+                outputDiv.style.borderColor = "#d63031";
+                outputDiv.innerText = "❌ Runtime Error:\n\n" + e.message;
+            }
+        };
+    </script>
+</body>
+</html>
