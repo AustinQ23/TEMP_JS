@@ -8,15 +8,27 @@
 </head>
 <body>
     <header>
-        <h1>TEMP_JS</h1>
-        <p>A lightweight, dynamic language built for clarity and speed.</p>
-        <a href="https://github.com/YOUR-GITHUB-USERNAME/CMSI-3802" class="btn">View on GitHub</a>
+        <a href="https://github.com/AustinQ23/TEMP_JS" target="_blank" class="banner-link">
+            <div class="banner-container">
+                <img src="tempJS-banner.png" alt="TEMP_JS Banner" class="banner-img">
+            </div>
+        </a>
     </header>
-
     <div class="container">
         <section id="story">
             <h2>The Story of TEMP_JS</h2>
-            <p></section>
+            <p>TEMP_JS was born out of a desire to help developers focus purely on logic in programming and worry less about superficial rules.
+                 It is a statically-typed, transpiled language that embraces simplicity—using intelligent type inference to give you the
+                  safety of a compiled language with the lightweight feel of a scripting language, combining aspects of famous languages
+                   like Python, Rust, JavaScript, and more.</p>
+            <p>The core philosophy behind TEMP_JS is safety through minimalism. We ditched semicolons and made variables
+                 immutable by default to prevent accidental state changes, requiring an explicit <code>mut</code> keyword to allow
+                  reassignment. Whether you are iterating through arrays or evaluating complex logical expressions, the language
+                   gets out of your way and catches your logical errors at compile-time.</p>
+            <p>TEMP_JS serves as a complete showcase of modern compiler
+                 architecture. Through semantic analysis and constant-folding optimization down to its final JavaScript code generation,
+                 everything is designed to make the programmer feel at ease with their work.
+        </section>
 
         <section id="examples">
             <h2>Example Programs</h2>
@@ -95,7 +107,23 @@ print(is_valid)</textarea>
             <pre id="out5" class="output hidden"></pre>
         </section>
 
-
+        <section id="bios">
+            <h2>Meet the Developers</h2>
+            <div class="bios">
+                <div class="bio-card">
+                    <h3>Colin Bajo-Smith</h3>
+                    <p>Colin specializes in grammar design and test-driven compiler development. He ensures that every syntax tree is as beautiful as the code it parses.</p>
+                </div>
+                <div class="bio-card">
+                    <h3>Max Lehmann</h3>
+                    <p>Max is the architect behind the semantic analysis phase, ensuring that all those untyped variables play nicely together at runtime.</p>
+                </div>
+                <div class="bio-card">
+                    <h3>Quinn Austin</h3>
+                    <p>Quinn focuses on code generation and optimization, turning abstract concepts into executable reality.</p>
+                </div>
+            </div>
+        </section>
     </div>
 
     <footer>
@@ -142,12 +170,12 @@ print(is_valid)</textarea>
 
                 outputDiv.style.color = "#00b894";
                 outputDiv.style.borderColor = "#00b894";
-                outputDiv.innerText = "✅ Success!\n\nOutput:\n" + (outputBuffer || "(No output)");
+                outputDiv.innerText = "Success!\n\nOutput:\n" + (outputBuffer || "(No output)");
 
             } catch (e) {
                 outputDiv.style.color = "#d63031";
                 outputDiv.style.borderColor = "#d63031";
-                outputDiv.innerText = "❌ Runtime Error:\n\n" + e.message;
+                outputDiv.innerText = "Runtime Error:\n\n" + e.message;
             }
         };
     </script>
