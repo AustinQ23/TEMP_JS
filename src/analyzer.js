@@ -93,6 +93,23 @@ export function analyze(ast) {
         return UNKNOWN;
       }
 
+      case 'ArrayLiteral': {
+        for (const el of expr.elements) inferType(el, env);
+        return 'array';
+      }
+
+      case 'IndexAccess': {
+        const arrType = inferType(expr.array, env);
+        const idxType = inferType(expr.index, env);
+        if (arrType && arrType !== UNKNOWN && arrType !== 'array') {
+          report(`Cannot index into type '${arrType}'`, expr);
+        }
+        if (idxType && idxType !== UNKNOWN && idxType !== 'num') {
+          report(`Array index must be 'num', got '${idxType}'`, expr);
+        }
+        return UNKNOWN;
+      }
+
       case 'Call': {
         const sig = funcSigs[expr.callee];
         if (!sig) {
@@ -175,6 +192,31 @@ export function analyze(ast) {
           } else if (retType && retType !== UNKNOWN && sig.returnType !== retType) {
             report(`Function '${currentFunc.name}' returns inconsistent types: '${sig.returnType}' and '${retType}'`, s);
           }
+          break;
+        }
+
+        case 'IndexAssign': {
+          const info = env[s.target];
+          if (!info) {
+            report(`Assignment to undeclared variable '${s.target}'`, s);
+          } else if (info.kind === 'let') {
+            report(`Cannot modify immutable array '${s.target}' (declared with 'let')`, s);
+          } else if (info.type && info.type !== UNKNOWN && info.type !== 'array') {
+            report(`Cannot index into '${s.target}' of type '${info.type}'`, s);
+          }
+          inferType(s.index, env);
+          inferType(s.value, env);
+          break;
+        }
+
+        case 'For': {
+          const iterType = inferType(s.iterable, env);
+          if (iterType && iterType !== UNKNOWN && iterType !== 'array') {
+            report(`For loop requires an array, got '${iterType}'`, s.iterable);
+          }
+          const loopEnv = Object.create(env);
+          loopEnv[s.variable] = { kind: 'let', type: UNKNOWN };
+          walkStmts(s.body || [], loopEnv, true, currentFunc);
           break;
         }
 

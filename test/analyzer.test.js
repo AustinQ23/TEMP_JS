@@ -177,6 +177,54 @@ fn f() {
   assert.ok(hasError(src, 'Undeclared variable'));
 });
 
+// ── Arrays ─────────────────────────────────────────────────────────────────
+
+test('analyzer: array literal infers type array', () => {
+  assert.ok(passes('fn f() { let a = [1, 2, 3] }'));
+});
+
+test('analyzer: indexing a non-array is an error', () => {
+  assert.ok(hasError('fn f() { let x = 5 let y = x[0] }', "Cannot index into type 'num'"));
+});
+
+test('analyzer: array index must be num', () => {
+  assert.ok(hasError('fn f() { let a = [1, 2] let x = a["bad"] }', "index must be 'num'"));
+});
+
+test('analyzer: index-assigning to a let array is an error', () => {
+  assert.ok(hasError('fn f() { let a = [1, 2, 3] a[0] = 99 }', 'immutable'));
+});
+
+test('analyzer: index-assigning to a mut array is valid', () => {
+  assert.ok(passes('fn f() { mut a = [1, 2, 3] a[0] = 99 }'));
+});
+
+test('analyzer: index-assigning to an undeclared variable is an error', () => {
+  assert.ok(hasError('fn f() { ghost[0] = 1 }', 'undeclared'));
+});
+
+// ── For loops ──────────────────────────────────────────────────────────────
+
+test('analyzer: for loop over an array is valid', () => {
+  assert.ok(passes('fn f() { let a = [1, 2, 3] for x in a { print(x) } }'));
+});
+
+test('analyzer: for loop over a non-array is an error', () => {
+  assert.ok(hasError('fn f() { let n = 5 for x in n { } }', "requires an array"));
+});
+
+test('analyzer: for loop variable does not leak outside the loop', () => {
+  assert.ok(hasError('fn f() { for x in [1, 2] { } let y = x }', 'Undeclared variable'));
+});
+
+test('analyzer: break is valid inside a for loop', () => {
+  assert.ok(passes('fn f() { for x in [1, 2, 3] { break } }'));
+});
+
+test('analyzer: for loop over an inline array literal is valid', () => {
+  assert.ok(passes('fn f() { for x in [10, 20, 30] { print(x) } }'));
+});
+
 test('analyzer: complete valid program produces no errors', () => {
   const src = `
 fn add(x, y) {

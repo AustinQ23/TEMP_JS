@@ -105,6 +105,35 @@ test('generator: arithmetic expression preserves parentheses', () => {
   assert.ok(out.includes('x'));
 });
 
+// ── Arrays and for loops ──────────────────────────────────────────────────
+
+test('generator: array literal emits JS array', () => {
+  assert.ok(contains('fn f() { let a = [1, 2, 3] }', '[1, 2, 3]'));
+});
+
+test('generator: empty array literal emits []', () => {
+  assert.ok(contains('fn f() { let a = [] }', '= []'));
+});
+
+test('generator: index access emits bracket notation', () => {
+  assert.ok(contains('fn f() { let a = [1, 2] let x = a[0] }', 'a[0]'));
+});
+
+test('generator: index assign emits bracket assignment', () => {
+  assert.ok(contains('fn f() { mut a = [1, 2, 3] a[0] = 99 }', 'a[0] = 99'));
+});
+
+test('generator: for loop emits for...of', () => {
+  const out = gen('fn f() { for x in [1, 2, 3] { print(x) } }');
+  assert.ok(out.includes('for (const x of'));
+});
+
+test('generator: for loop body is indented', () => {
+  const out = gen('fn f() { let a = [1, 2] for x in a { print(x) } }');
+  assert.ok(out.includes('for (const x of a)'));
+  assert.ok(out.includes('console.log(x)'));
+});
+
 // ── Assignment ─────────────────────────────────────────────────────────────
 
 test('generator: reassignment emits plain assignment', () => {

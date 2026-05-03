@@ -1,22 +1,21 @@
-fn add(x, y) {
-    return x + y
+fn sum(nums) {
+    mut total = 0
+    for n in nums {
+        total = total + n
+    }
+    return total
 }
 
 fn main() {
-    let a = 10
-    let b = 3
-    mut result = add(a, b)
+    let nums = [1, 2, 3, 4, 5]
+    let result = sum(nums)
     print(result)
 
-    result = result * 2
-    print(result)
+    mut scores = [10, 20, 30]
+    scores[0] = 99
+    print(scores[0])
 
-    let greeting = "Hello"
-    let name = "World"
-    print(greeting + " " + name)
-
-    let flag = result > 10
-    if flag {
-        print(result)
+    for x in [10, 20, 30] {
+        print(x)
     }
 }

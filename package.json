@@ -11,7 +11,7 @@
     "test": "node --test test/compiler.test.js test/grammar.test.js test/analyzer.test.js test/optimizer.test.js test/generator.test.js"
   },
   "author": "Quinn Austin, Colin Bajo-Smith, Max Lehmann",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "graph-stringify": "^1.1.0",
     "ohm-js": "^17.5.0"

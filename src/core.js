@@ -62,6 +62,14 @@ semantics.addOperation('ast', {
     return n('While', { cond: cond.ast(), body: stmts.children.map(s => s.ast()) });
   },
 
+  ForStmt(_for, id, _in, iterable, _open, stmts, _close) {
+    return n('For', { variable: id.ast().name, iterable: iterable.ast(), body: stmts.children.map(s => s.ast()) });
+  },
+
+  IndexAssign(id, _open, index, _close, _eq, value) {
+    return n('IndexAssign', { target: id.ast().name, index: index.ast(), value: value.ast() });
+  },
+
   ReturnStmt(_ret, expOpt) {
     const expr = expOpt.children.length ? expOpt.children[0].ast() : null;
     return n('Return', { expr });
@@ -86,6 +94,12 @@ semantics.addOperation('ast', {
   Exp5(expr) { return expr.ast(); },
   Exp6_power(left, _op, right) { return n('Binary', { op: '**', left: left.ast(), right: right.ast() }); },
   Exp6(expr) { return expr.ast(); },
+  Exp7_index(arr, _open, index, _close) {
+    return n('IndexAccess', { array: arr.ast(), index: index.ast() });
+  },
+  Exp7_array(_open, elements, _close) {
+    return n('ArrayLiteral', { elements: elements.asIteration().children.map(c => c.ast()) });
+  },
   Exp7_call(id, _open, args, _close) {
     const argList = args.asIteration().children.map(c => c.ast());
     return n('Call', { callee: id.ast().name, args: argList });

@@ -13,6 +13,10 @@ function emitExpr(expr, level=0) {
       return `(${expr.op}${emitExpr(expr.expr)})`;
     case 'Call':
       return `${expr.callee}(${expr.args.map(a => emitExpr(a)).join(', ')})`;
+    case 'ArrayLiteral':
+      return `[${expr.elements.map(e => emitExpr(e)).join(', ')}]`;
+    case 'IndexAccess':
+      return `${emitExpr(expr.array)}[${emitExpr(expr.index)}]`;
     default:
       throw new Error(`Unhandled expr kind ${expr.type}`);
   }
@@ -42,6 +46,12 @@ function emitStmt(stmt, level=0) {
       return stmt.expr ? `${indent(level)}return ${emitExpr(stmt.expr)};` : `${indent(level)}return;`;
     case 'Break':
       return `${indent(level)}break;`;
+    case 'IndexAssign':
+      return `${indent(level)}${stmt.target}[${emitExpr(stmt.index)}] = ${emitExpr(stmt.value)};`;
+    case 'For': {
+      const body = stmt.body.map(s => emitStmt(s, level + 1)).join('\n');
+      return `${indent(level)}for (const ${stmt.variable} of ${emitExpr(stmt.iterable)}) {\n${body}\n${indent(level)}}`;
+    }
     case 'Block':
       return stmt.body.map(s => emitStmt(s, level)).join('\n');
     default:

@@ -156,6 +156,21 @@ export function optimize(node) {
         expr
       };
 
+    case 'ArrayLiteral':
+      return { ...node, elements: node.elements.map(optimize) };
+
+    case 'IndexAccess':
+      return { ...node, array: optimize(node.array), index: optimize(node.index) };
+
+    case 'IndexAssign':
+      return { ...node, index: optimize(node.index), value: optimize(node.value) };
+
+    case 'For': {
+      const forIterable = optimize(node.iterable);
+      const forBody = node.body.map(optimize).filter(s => s !== null);
+      return { ...node, iterable: forIterable, body: forBody };
+    }
+
     case 'Call':
       return {
         ...node,

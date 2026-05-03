@@ -1,25 +1,29 @@
 TEMP_JS {
   Program     = Decl+
   Decl        = FuncDecl | VarDecl | Statement
-  
+
   FuncDecl    = "fn" id "(" ListOf<Param, ","> ")" "{" Statement* "}"
   Param       = id
-  
-  Statement   = VarDecl 
-              | Assign 
-              | Print 
-              | IfStmt 
-              | WhileStmt 
-              | ReturnStmt 
+
+  Statement   = VarDecl
+              | IndexAssign
+              | Assign
+              | Print
+              | IfStmt
+              | WhileStmt
+              | ForStmt
+              | ReturnStmt
               | BreakStmt
               | ExpStmt
-              
+
   VarDecl     = ("let" | "mut") id "=" Exp
+  IndexAssign = id "[" Exp "]" "=" Exp
   Assign      = id "=" Exp
   Print       = "print" "(" Exp ")"
   IfStmt      = "if" Exp "{" Statement* "}" "else" "{" Statement* "}" -- long
               | "if" Exp "{" Statement* "}" -- short
   WhileStmt   = "while" Exp "{" Statement* "}"
+  ForStmt     = "for" id "in" Exp "{" Statement* "}"
   ReturnStmt  = "return" Exp?
   BreakStmt   = "break"
   ExpStmt     = Exp
@@ -38,26 +42,25 @@ TEMP_JS {
               | Exp6
   Exp6        = Exp7 "**" Exp6        -- power
               | Exp7
-  Exp7        = literal
-              | id "(" ListOf<Exp, ","> ")" -- call
-              | id                    -- id
-              | "(" Exp ")"           -- parens
+  Exp7        = Exp7 "[" Exp "]"             -- index
+              | "[" ListOf<Exp, ","> "]"     -- array
+              | literal
+              | id "(" ListOf<Exp, ","> ")"  -- call
+              | id                           -- id
+              | "(" Exp ")"                  -- parens
 
   relop       = "<=" | ">=" | "==" | "!=" | "<" | ">"
   addop       = "+" | "-"
   mulop       = "*" | "/" | "%"
   prefixop    = "-" | "!"
-  
+
   id          = ~keyword letter (alnum | "_")*
-  // A keyword must not be followed by an identifier character so that identifiers
-  // like `mut_example` are allowed. We use a negative lookahead for the
-  // identifier chars (alnum or underscore) to enforce a word boundary.
-  keyword     = ("fn" | "let" | "mut" | "if" | "else" | "while" | "return" | "break" | "print" | "true" | "false") ~(alnum | "_")
+  keyword     = ("fn" | "let" | "mut" | "if" | "else" | "while" | "for" | "in" | "return" | "break" | "print" | "true" | "false") ~(alnum | "_")
   literal     = num | string | true | false
   num         = digit+ ("." digit+)?
   string      = "\"" (~"\"" any)* "\""
   true        = "true"
   false       = "false"
-  
+
   space      += "//" (~"\n" any)* "\n"?  -- comment
 }

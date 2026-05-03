@@ -178,6 +178,41 @@ test('optimizer: x - 0 simplifies to x', () => {
   assert.equal(result.name, 'x');
 });
 
+// ── Arrays and for loops ──────────────────────────────────────────────────
+
+test('optimizer: array literal elements are folded', () => {
+  const node = { type: 'ArrayLiteral', elements: [bin('+', lit(1), lit(2)), lit(10)] };
+  const result = optimize(node);
+  assert.equal(result.elements[0].value, 3);
+  assert.equal(result.elements[1].value, 10);
+});
+
+test('optimizer: index access folds the index expression', () => {
+  const node = { type: 'IndexAccess', array: id('arr'), index: bin('+', lit(1), lit(1)) };
+  const result = optimize(node);
+  assert.equal(result.index.type, 'Literal');
+  assert.equal(result.index.value, 2);
+});
+
+test('optimizer: index assign folds the value expression', () => {
+  const node = { type: 'IndexAssign', target: 'arr', index: lit(0), value: bin('*', lit(3), lit(3)) };
+  const result = optimize(node);
+  assert.equal(result.value.type, 'Literal');
+  assert.equal(result.value.value, 9);
+});
+
+test('optimizer: for loop body has dead code removed', () => {
+  const node = {
+    type: 'For',
+    variable: 'x',
+    iterable: id('arr'),
+    body: [assign('x', id('x')), { type: 'Break' }]
+  };
+  const result = optimize(node);
+  assert.equal(result.body.length, 1);
+  assert.equal(result.body[0].type, 'Break');
+});
+
 // ── Program-level dead code removal ───────────────────────────────────────
 
 test('optimizer: dead statements are filtered from program body', () => {
