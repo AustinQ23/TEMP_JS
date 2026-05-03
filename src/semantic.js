@@ -3,6 +3,8 @@
 // - assignments to `let` declarations are errors (immutable)
 // This is intentionally simple and operates on source text using brace-matching and line scanning.
 
+import { analyze as analyzeAst } from './analyzer.js';
+
 export function validateDeclarations(src) {
   const errors = [];
 
@@ -74,4 +76,16 @@ export function validateDeclarations(src) {
   return errors;
 }
 
-export default { validateDeclarations };
+// New compatibility wrapper: try to parse AST and run AST-based analyzer if available
+// If caller passes a parsed AST instead of source string, support that too.
+export function validate(input) {
+  // If input is an AST (object with type 'Program'), call analyzeAst
+  if (input && typeof input === 'object' && input.type === 'Program') {
+    const errs = analyzeAst(input);
+    return errs;
+  }
+  // Otherwise assume input is source string and use the text-scanning validator for now
+  return validateDeclarations(input);
+}
+
+export default { validateDeclarations, validate };
