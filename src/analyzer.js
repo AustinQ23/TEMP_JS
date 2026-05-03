@@ -1,8 +1,11 @@
-// AST-based analyzer: builds simple symbol table per function and enforces:
-// - assignment must target a previously seen VarDecl or parameter
-// - assignments to `let` are errors
+// Type-inferring semantic analyzer.
+// Types are inferred from initializers and literal values — no annotations required.
+// 'unknown' is used when a type cannot be determined (e.g. function parameters);
+// errors are only reported when both sides of an operation have known, incompatible types.
 
-export function analyze(ast, source) {
+const UNKNOWN = 'unknown';
+
+export function analyze(ast) {
   const errors = [];
   if (!ast) return errors;
 
@@ -10,60 +13,198 @@ export function analyze(ast, source) {
     errors.push({ message: msg, node });
   }
 
-  for (const top of ast.body) {
-    if (top.type !== 'FunctionDecl') continue;
-    const declared = Object.create(null);
-
-    // parameters: treat as declared let (immutable)
-    for (const p of top.params || []) {
-      declared[p.name] = { kind: 'let', node: p };
+  // First pass: register all function names and param counts so forward calls work.
+  // Return types start as UNKNOWN and get filled in when a return statement is analyzed.
+  const funcSigs = Object.create(null);
+  for (const node of ast.body) {
+    if (node.type === 'FunctionDecl') {
+      funcSigs[node.name] = { paramCount: node.params.length, returnType: UNKNOWN };
     }
+  }
 
-    function walkStmts(stmts) {
-      for (const s of stmts) {
-        if (!s) continue;
-        switch (s.type) {
-          case 'VarDecl': {
-            const name = s.name;
-            const kind = s.kind; // 'let' or 'mut'
-            // record declaration (visible after this point)
-            declared[name] = { kind, node: s };
-            // if initializer is present, we could type-check it later
-            break;
-          }
-          case 'Assign': {
-            const name = s.target;
-            const info = declared[name];
-            if (!info) {
-              report(`Assignment to undeclared variable '${name}'`, s);
-            } else if (info.kind === 'let') {
-              report(`Assignment to immutable 'let' variable '${name}'`, s);
-            }
-            break;
-          }
-          case 'If': {
-            // analyze then and else bodies in-order; declarations in then/else are visible after they appear
-            walkStmts(s.thenBody || []);
-            if (s.elseBody) walkStmts(s.elseBody || []);
-            break;
-          }
-          case 'While': {
-            walkStmts(s.body || []);
-            break;
-          }
-          case 'Return':
-          case 'Print':
-          case 'Break':
-            // nothing to do
-            break;
-          default:
-            // expressions used as statements (ExpStmt) can be calls etc; we don't need checks here
-            break;
+  // Infer the type of an expression given the current variable environment.
+  // Returns a type string ('num' | 'str' | 'bool' | 'unknown') or null when the
+  // expression contains a fatal error (e.g. reference to an undeclared variable).
+  function inferType(expr, env) {
+    if (!expr) return null;
+    switch (expr.type) {
+      case 'Literal': {
+        if (typeof expr.value === 'number') return 'num';
+        if (typeof expr.value === 'string') return 'str';
+        if (typeof expr.value === 'boolean') return 'bool';
+        return UNKNOWN;
+      }
+
+      case 'Identifier': {
+        const info = env[expr.name];
+        if (!info) {
+          report(`Undeclared variable '${expr.name}'`, expr);
+          return null;
         }
+        return info.type;
+      }
+
+      case 'Binary': {
+        const lt = inferType(expr.left, env);
+        const rt = inferType(expr.right, env);
+        const op = expr.op;
+        // Only report type errors when both sides have a concrete known type.
+        const bothKnown = lt && lt !== UNKNOWN && rt && rt !== UNKNOWN;
+
+        if (['+', '-', '*', '/', '%', '**'].includes(op)) {
+          if (op === '+' && bothKnown && lt === 'str' && rt === 'str') return 'str';
+          if (bothKnown && (lt !== 'num' || rt !== 'num')) {
+            report(`Operator '${op}' requires num operands, got '${lt}' and '${rt}'`, expr);
+          }
+          return 'num';
+        }
+        if (['<', '<=', '>', '>='].includes(op)) {
+          if (bothKnown && (lt !== 'num' || rt !== 'num')) {
+            report(`Operator '${op}' requires num operands, got '${lt}' and '${rt}'`, expr);
+          }
+          return 'bool';
+        }
+        if (op === '==' || op === '!=') {
+          if (bothKnown && lt !== rt) {
+            report(`Cannot compare '${lt}' and '${rt}' with '${op}'`, expr);
+          }
+          return 'bool';
+        }
+        if (op === '&&' || op === '||') {
+          if (bothKnown && (lt !== 'bool' || rt !== 'bool')) {
+            report(`Operator '${op}' requires bool operands, got '${lt}' and '${rt}'`, expr);
+          }
+          return 'bool';
+        }
+        return UNKNOWN;
+      }
+
+      case 'Unary': {
+        const t = inferType(expr.expr, env);
+        const known = t && t !== UNKNOWN;
+        if (expr.op === '-') {
+          if (known && t !== 'num') report(`Unary '-' requires num, got '${t}'`, expr);
+          return 'num';
+        }
+        if (expr.op === '!') {
+          if (known && t !== 'bool') report(`Unary '!' requires bool, got '${t}'`, expr);
+          return 'bool';
+        }
+        return UNKNOWN;
+      }
+
+      case 'Call': {
+        const sig = funcSigs[expr.callee];
+        if (!sig) {
+          report(`Call to undeclared function '${expr.callee}'`, expr);
+          return null;
+        }
+        if (expr.args.length !== sig.paramCount) {
+          report(`'${expr.callee}' expects ${sig.paramCount} argument(s), got ${expr.args.length}`, expr);
+        }
+        for (const arg of expr.args) inferType(arg, env);
+        return sig.returnType === UNKNOWN ? UNKNOWN : sig.returnType;
+      }
+
+      default:
+        return UNKNOWN;
+    }
+  }
+
+  function walkStmts(stmts, env, inLoop, currentFunc) {
+    for (const s of stmts) {
+      if (!s) continue;
+      switch (s.type) {
+        case 'VarDecl': {
+          const initType = inferType(s.init, env);
+          // Infer variable's type from its initializer and record it.
+          env[s.name] = { kind: s.kind, type: initType ?? UNKNOWN };
+          break;
+        }
+
+        case 'Assign': {
+          const info = env[s.target];
+          if (!info) {
+            report(`Assignment to undeclared variable '${s.target}'`, s);
+          } else if (info.kind === 'let') {
+            report(`Cannot assign to immutable variable '${s.target}' (declared with 'let')`, s);
+          } else {
+            const exprType = inferType(s.expr, env);
+            const bothKnown = info.type !== UNKNOWN && exprType && exprType !== UNKNOWN;
+            if (bothKnown && info.type !== exprType) {
+              report(`Cannot assign '${exprType}' to '${s.target}' (inferred type '${info.type}')`, s);
+            }
+          }
+          break;
+        }
+
+        case 'Print':
+          inferType(s.expr, env);
+          break;
+
+        case 'If': {
+          const condType = inferType(s.cond, env);
+          if (condType && condType !== UNKNOWN && condType !== 'bool') {
+            report(`If condition must be 'bool', got '${condType}'`, s.cond);
+          }
+          // Each branch gets a child scope so inner declarations don't leak out.
+          walkStmts(s.thenBody || [], Object.create(env), inLoop, currentFunc);
+          if (s.elseBody) walkStmts(s.elseBody, Object.create(env), inLoop, currentFunc);
+          break;
+        }
+
+        case 'While': {
+          const condType = inferType(s.cond, env);
+          if (condType && condType !== UNKNOWN && condType !== 'bool') {
+            report(`While condition must be 'bool', got '${condType}'`, s.cond);
+          }
+          walkStmts(s.body || [], Object.create(env), true, currentFunc);
+          break;
+        }
+
+        case 'Return': {
+          if (!currentFunc) {
+            report(`'return' used outside of a function`, s);
+            break;
+          }
+          const retType = s.expr ? inferType(s.expr, env) : 'void';
+          const sig = funcSigs[currentFunc.name];
+          if (sig.returnType === UNKNOWN) {
+            // First return statement sets the inferred return type.
+            sig.returnType = retType;
+          } else if (retType && retType !== UNKNOWN && sig.returnType !== retType) {
+            report(`Function '${currentFunc.name}' returns inconsistent types: '${sig.returnType}' and '${retType}'`, s);
+          }
+          break;
+        }
+
+        case 'Break':
+          if (!inLoop) report(`'break' used outside of a loop`, s);
+          break;
+
+        default:
+          // Expression used as a statement (e.g. a standalone function call).
+          inferType(s, env);
+          break;
       }
     }
+  }
 
-    walkStmts(top.body || []);
+  // Global scope holds top-level variable declarations.
+  const globalEnv = Object.create(null);
+
+  for (const top of ast.body) {
+    if (top.type === 'FunctionDecl') {
+      const funcEnv = Object.create(globalEnv);
+      // Parameters have unknown types until call-site inference is added.
+      for (const p of top.params || []) {
+        funcEnv[p.name] = { kind: 'let', type: UNKNOWN };
+      }
+      walkStmts(top.body || [], funcEnv, false, { name: top.name });
+    } else {
+      // Top-level statements share the global scope.
+      walkStmts([top], globalEnv, false, null);
+    }
   }
 
   return errors;

@@ -2,7 +2,10 @@
   "name": "cmsi-3802",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/temp_js.js",
+  "bin": {
+    "temp-js": "src/temp_js.js"
+  },
   "type": "module",
   "scripts": {
     "test": "node --test test/grammar.test.js"
@@ -10,6 +13,7 @@
   "author": "Quinn Austin, Colin Bajo-Smith, Max Lehmann",
   "license": "ISC",
   "dependencies": {
+    "graph-stringify": "^1.1.0",
     "ohm-js": "^17.5.0"
   }
 }

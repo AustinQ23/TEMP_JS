@@ -20,28 +20,23 @@ semantics.addOperation('ast', {
 
   Decl(d) { return d.ast(); },
 
-  FuncDecl(_fn, name, _open, params, _close, ret, _openb, stmts, _closeb) {
+  FuncDecl(_fn, name, _open, params, _close, _openb, stmts, _closeb) {
     const pname = name.ast().name;
     const paramsArr = params.children.length === 0 ? [] : params.children.map(c => c.ast());
     const body = stmts.children.map(s => s.ast());
-    const returnType = ret.children.length ? ret.children[0].ast() : null;
-    return n('FunctionDecl', { name: pname, params: paramsArr, returnType, body });
+    return n('FunctionDecl', { name: pname, params: paramsArr, body });
   },
 
-  Param(id, _colon, type) {
-    return n('Param', { name: id.ast().name, annType: type.ast() });
+  Param(id) {
+    return n('Param', { name: id.ast().name });
   },
-
-  type(_t) { return this.sourceString; },
 
   Statement(s) { return s.ast(); },
 
-  VarDecl(kind, id, typeOpt, _eq, initOpt) {
+  VarDecl(kind, id, _eq, init) {
     const k = kind.sourceString;
     const name = id.ast().name;
-    const ann = typeOpt.children.length ? typeOpt.children[0].ast() : null;
-    const init = initOpt.children.length ? initOpt.children[0].ast() : null;
-    return n('VarDecl', { kind: k, name, annType: ann, init });
+    return n('VarDecl', { kind: k, name, init: init.ast() });
   },
 
   Assign(id, _eq, exp) {
@@ -52,16 +47,15 @@ semantics.addOperation('ast', {
     return n('Print', { expr: exp.ast() });
   },
 
-  IfStmt(_if, cond, _open, thenStmts, _close, elseOpt) {
+  IfStmt_long(_if, cond, _open, thenStmts, _close, _else, _open2, elseStmts, _close2) {
     const thenBody = thenStmts.children.map(s => s.ast());
-    let elseBody = null;
-    if (elseOpt.children.length) {
-      // elseOpt is ("else" "{" Statement* "}")?
-      const inner = elseOpt.children[0];
-      // inner children: 'else', '{', stmts, '}'
-      elseBody = inner.children[2].children.map(s => s.ast());
-    }
+    const elseBody = elseStmts.children.map(s => s.ast());
     return n('If', { cond: cond.ast(), thenBody, elseBody });
+  },
+
+  IfStmt_short(_if, cond, _open, stmts, _close) {
+    const thenBody = stmts.children.map(s => s.ast());
+    return n('If', { cond: cond.ast(), thenBody, elseBody: null });
   },
 
   WhileStmt(_while, cond, _open, stmts, _close) {
@@ -82,38 +76,34 @@ semantics.addOperation('ast', {
   Exp(left) { return left.ast(); },
   Exp1_and(left, _op, right) { return n('Binary', { op: '&&', left: left.ast(), right: right.ast() }); },
   Exp1(left) { return left.ast(); },
-  Exp2_compare(left, _op, right) { return n('Binary', { op: this.children[1].sourceString, left: left.ast(), right: right.ast() }); },
+  Exp2_compare(left, op, right) { return n('Binary', { op: op.sourceString, left: left.ast(), right: right.ast() }); },
   Exp2(left) { return left.ast(); },
-  Exp3_add(left, _op, right) { return n('Binary', { op: this.children[1].sourceString, left: left.ast(), right: right.ast() }); },
+  Exp3_add(left, op, right) { return n('Binary', { op: op.sourceString, left: left.ast(), right: right.ast() }); },
   Exp3(left) { return left.ast(); },
-  Exp4_mul(left, _op, right) { return n('Binary', { op: this.children[1].sourceString, left: left.ast(), right: right.ast() }); },
+  Exp4_multiply(left, op, right) { return n('Binary', { op: op.sourceString, left: left.ast(), right: right.ast() }); },
   Exp4(left) { return left.ast(); },
-  Exp5_prefix(op, right) { return n('Unary', { op: op.sourceString, expr: right.ast() }); },
+  Exp5_prefix(op, expr) { return n('Unary', { op: op.sourceString, expr: expr.ast() }); },
   Exp5(expr) { return expr.ast(); },
   Exp6_power(left, _op, right) { return n('Binary', { op: '**', left: left.ast(), right: right.ast() }); },
-  Exp6(left) { return left.ast(); },
-  Exp7_literal(lit) { return lit.ast(); },
-  Exp7_call(id, _open, list, _close) {
-    const args = list.children.length ? list.children[0].children.map(c => c.ast()) : [];
-    return n('Call', { callee: id.ast().name, args });
+  Exp6(expr) { return expr.ast(); },
+  Exp7_call(id, _open, args, _close) {
+    const argList = args.children.length ? args.children[0].children.map(c => c.ast()) : [];
+    return n('Call', { callee: id.ast().name, args: argList });
   },
   Exp7_id(id) { return id.ast(); },
-  Exp7_paren(_open, e, _close) { return e.ast(); },
+  Exp7_parens(_open, expr, _close) { return expr.ast(); },
 
   relop(ch) { return this.sourceString; },
   addop(ch) { return this.sourceString; },
   mulop(ch) { return this.sourceString; },
   prefixop(ch) { return this.sourceString; },
 
-  id(_notKw, first, rest) { return n('Identifier', { name: this.sourceString }); },
+  id(a, b) { return n('Identifier', { name: this.sourceString }); },
 
-  literal_num(num) { return n('Literal', { value: Number(this.sourceString), valueType: 'num' }); },
-  literal_string(str) { return n('Literal', { value: this.sourceString.slice(1, -1), valueType: 'string' }); },
-  literal_true() { return n('Literal', { value: true, valueType: 'bool' }); },
-  literal_false() { return n('Literal', { value: false, valueType: 'bool' }); },
-
-  num(_digs, _opt) { return n('Literal', { value: Number(this.sourceString), valueType: 'num' }); },
-  string(_open, _chars, _close) { return n('Literal', { value: this.sourceString.slice(1, -1), valueType: 'string' }); },
+  num(a, b, c) { return n('Literal', { value: Number(this.sourceString) }); },
+  string(_open, _chars, _close) { return n('Literal', { value: this.sourceString.slice(1, -1) }); },
+  true(_true) { return n('Literal', { value: true }); },
+  false(_false) { return n('Literal', { value: false }); },
 
   // default
   _terminal() { return this.sourceString; },
