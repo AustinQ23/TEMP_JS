@@ -86,9 +86,33 @@ function emitStmt(stmt, level=0) {
   }
 }
 
+const RANGE_HELPER = `function range(start, stop, step) {
+  if (stop === undefined) { stop = start; start = 0; }
+  if (step === undefined) step = 1;
+  const result = [];
+  for (let i = start; i < stop; i += step) result.push(i);
+  return result;
+}`;
+
+function hasRangeCall(nodes) {
+  if (!nodes) return false;
+  for (const node of nodes) {
+    if (!node) continue;
+    if (node.type === 'Call' && node.callee === 'range') return true;
+    if (node.type === 'FunctionDecl' && hasRangeCall(node.body)) return true;
+    if (node.type === 'If' && (hasRangeCall(node.thenBody) || hasRangeCall(node.elseBody))) return true;
+    if (node.type === 'While' && hasRangeCall(node.body)) return true;
+    if (node.type === 'For' && (node.iterable?.type === 'Call' && node.iterable.callee === 'range' || hasRangeCall(node.body))) return true;
+    if (node.type === 'Match' && node.arms?.some(a => hasRangeCall(a.body))) return true;
+    if (node.args && hasRangeCall(node.args)) return true;
+  }
+  return false;
+}
+
 export function generateJS(ast) {
   if (!ast || ast.type !== 'Program') throw new Error('Invalid AST for codegen');
   const parts = [];
+  if (hasRangeCall(ast.body)) parts.push(RANGE_HELPER);
   for (const node of ast.body) {
     if (node.type === 'EnumDecl') {
       const pairs = node.variants.map(v => `${v}: "${v}"`).join(', ');

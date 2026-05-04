@@ -4,6 +4,10 @@
 
 const UNKNOWN = 'unknown';
 
+const BUILTINS = {
+  range: { minArgs: 1, maxArgs: 3, returnType: 'array' },
+};
+
 export function analyze(ast) {
   const errors = [];
   if (!ast) return errors;
@@ -126,16 +130,21 @@ export function analyze(ast) {
       }
 
       case 'Call': {
+        const builtin = BUILTINS[expr.callee];
         const sig = funcSigs[expr.callee];
-        if (!sig) {
+        if (!sig && !builtin) {
           report(`Call to undeclared function '${expr.callee}'`, expr);
           return null;
         }
-        if (expr.args.length !== sig.paramCount) {
+        if (sig && expr.args.length !== sig.paramCount) {
           report(`'${expr.callee}' expects ${sig.paramCount} argument(s), got ${expr.args.length}`, expr);
         }
+        if (builtin && (expr.args.length < builtin.minArgs || expr.args.length > builtin.maxArgs)) {
+          report(`'${expr.callee}' expects ${builtin.minArgs}-${builtin.maxArgs} argument(s), got ${expr.args.length}`, expr);
+        }
         for (const arg of expr.args) inferType(arg, env);
-        return sig.returnType === UNKNOWN ? UNKNOWN : sig.returnType;
+        const rt = sig ? sig.returnType : builtin.returnType;
+        return rt === UNKNOWN ? UNKNOWN : rt;
       }
 
     }

@@ -284,3 +284,35 @@ test('generator: empty fstring emits empty template literal', () => {
   const out = gen('fn f() { let s = f"" }');
   assert.ok(out.includes('``'));
 });
+
+// ── range() built-in ───────────────────────────────────────────────────────
+
+test('generator: range call emits range()', () => {
+  const out = gen('fn f() { for x in range(5) { print(x) } }');
+  assert.ok(out.includes('range(5)'));
+});
+
+test('generator: range in for loop emits for...of range()', () => {
+  const out = gen('fn f() { for x in range(5) { print(x) } }');
+  assert.ok(out.includes('for (const x of range(5))'));
+});
+
+test('generator: range helper is emitted when range is used', () => {
+  const out = gen('fn f() { for x in range(3) { print(x) } }');
+  assert.ok(out.includes('function range('));
+});
+
+test('generator: range helper is not emitted when range is not used', () => {
+  const out = gen('fn f() { let x = 5 }');
+  assert.ok(!out.includes('function range('));
+});
+
+test('generator: range with two args emits range(start, stop)', () => {
+  const out = gen('fn f() { for x in range(1, 5) { print(x) } }');
+  assert.ok(out.includes('range(1, 5)'));
+});
+
+test('generator: range with three args emits range(start, stop, step)', () => {
+  const out = gen('fn f() { for x in range(0, 10, 2) { print(x) } }');
+  assert.ok(out.includes('range(0, 10, 2)'));
+});

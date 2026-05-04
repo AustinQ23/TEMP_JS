@@ -430,3 +430,33 @@ test('analyzer: fstring with expression interpolation is valid', () => {
 test('analyzer: empty fstring is valid', () => {
   assert.ok(passes('fn f() { let s = f"" }'));
 });
+
+// range() built-in
+
+test('analyzer: range(n) with one arg is valid', () => {
+  assert.ok(passes('fn f() { let a = range(5) }'));
+});
+
+test('analyzer: range(start, stop) with two args is valid', () => {
+  assert.ok(passes('fn f() { let a = range(1, 10) }'));
+});
+
+test('analyzer: range(start, stop, step) with three args is valid', () => {
+  assert.ok(passes('fn f() { let a = range(0, 10, 2) }'));
+});
+
+test('analyzer: range() with zero args is an error', () => {
+  assert.ok(hasError('fn f() { let a = range() }', 'expects 1-3'));
+});
+
+test('analyzer: range() with too many args is an error', () => {
+  assert.ok(hasError('fn f() { let a = range(0, 10, 2, 99) }', 'expects 1-3'));
+});
+
+test('analyzer: range() in for loop is valid', () => {
+  assert.ok(passes('fn f() { for x in range(5) { print(x) } }'));
+});
+
+test('analyzer: range() returns array type (can be indexed)', () => {
+  assert.ok(passes('fn f() { let a = range(5) let x = a[0] }'));
+});

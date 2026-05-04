@@ -1,0 +1,27 @@
+fn sum_range(n) {
+  mut total = 0
+  for i in range(n) {
+    mut total = total + i
+  }
+  return total
+}
+
+fn main() {
+  // range(stop) — 0 up to stop
+  for x in range(5) {
+    print(x)
+  }
+
+  // range(start, stop)
+  for x in range(10, 15) {
+    print(x)
+  }
+
+  // range(start, stop, step)
+  for x in range(0, 20, 4) {
+    print(x)
+  }
+
+  let s = sum_range(10)
+  print(f"Sum 0..9 = {s}")
+}
