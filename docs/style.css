@@ -119,7 +119,21 @@ h2 {
     display: block;
 }
 
-/* --- THE RIGHT TEXT AREA (Now holds Name + Bio) --- */
+.quinn-wrapper {
+    width: 170px;           
+    height: 210px;  
+}
+
+.colin-wrapper {
+    width: 170px;           
+    height: 230px;  
+}
+
+.max-wrapper {
+    width: 180px;           
+    height: 230px;  
+}
+
 .bio-content {
     flex: 1;                
     display: flex;
