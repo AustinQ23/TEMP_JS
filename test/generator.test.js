@@ -316,3 +316,15 @@ test('generator: range with three args emits range(start, stop, step)', () => {
   const out = gen('fn f() { for x in range(0, 10, 2) { print(x) } }');
   assert.ok(out.includes('range(0, 10, 2)'));
 });
+
+// ── Floor division ─────────────────────────────────────────────────────────
+
+test('generator: floor division emits Math.floor', () => {
+  const out = gen('fn f() { let a = [7] let x = a[0] let y = x // 2 }');
+  assert.ok(out.includes('Math.floor('));
+});
+
+test('generator: floor division with variables emits Math.floor(a / b)', () => {
+  const out = gen('fn f() { let a = [7] let x = a[0] let y = x // 2 }');
+  assert.ok(out.includes('Math.floor(x / 2)'));
+});

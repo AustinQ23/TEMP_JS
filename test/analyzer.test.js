@@ -460,3 +460,21 @@ test('analyzer: range() in for loop is valid', () => {
 test('analyzer: range() returns array type (can be indexed)', () => {
   assert.ok(passes('fn f() { let a = range(5) let x = a[0] }'));
 });
+
+// ── Floor division ─────────────────────────────────────────────────────────
+
+test('analyzer: floor division of two nums is valid', () => {
+  assert.ok(passes('fn f() { let x = 7 // 2 }'));
+});
+
+test('analyzer: floor division result is num type', () => {
+  assert.ok(passes('fn f() { mut n = 10 n = 7 // 2 }'));
+});
+
+test('analyzer: floor division with str operand is a type error', () => {
+  assert.ok(hasError('fn f() { let x = "hi" // 2 }', 'requires num operands'));
+});
+
+test('analyzer: # comment is ignored', () => {
+  assert.ok(passes('fn f() { # this is a comment\nlet x = 1 }'));
+});

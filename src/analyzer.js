@@ -56,7 +56,7 @@ export function analyze(ast) {
         // Only report type errors when both sides have a concrete known type.
         const bothKnown = lt && lt !== UNKNOWN && rt && rt !== UNKNOWN;
 
-        if (['+', '-', '*', '/', '%', '**'].includes(op)) {
+        if (['+', '-', '*', '/', '//', '%', '**'].includes(op)) {
           if (op === '+' && bothKnown && lt === 'str' && rt === 'str') return 'str';
           if (bothKnown && (lt !== 'num' || rt !== 'num')) {
             report(`Operator '${op}' requires num operands, got '${lt}' and '${rt}'`, expr);

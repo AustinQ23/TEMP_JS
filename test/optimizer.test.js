@@ -431,3 +431,22 @@ test('optimizer: fstring with mixed parts folds only interp', () => {
   assert.equal(result.parts[0].value, 'x=');
   assert.equal(result.parts[1].expr.value, 6);
 });
+
+// ── Floor division ─────────────────────────────────────────────────────────
+
+test('optimizer: folds 7 // 2 to 3', () => {
+  const result = optimize(bin('//', lit(7), lit(2)));
+  assert.equal(result.type, 'Literal');
+  assert.equal(result.value, 3);
+});
+
+test('optimizer: folds -7 // 2 to -4 (floors toward negative infinity)', () => {
+  const result = optimize(bin('//', lit(-7), lit(2)));
+  assert.equal(result.type, 'Literal');
+  assert.equal(result.value, -4);
+});
+
+test('optimizer: floor division by zero is not constant folded', () => {
+  const result = optimize(bin('//', lit(5), lit(0)));
+  assert.equal(result.type, 'Binary');
+});

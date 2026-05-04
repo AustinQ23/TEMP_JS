@@ -117,7 +117,8 @@ export function optimize(node) {
           case '+': result = l + r; break;
           case '-': result = l - r; break;
           case '*': result = l * r; break;
-          case '/': if (r !== 0) result = l / r; break;
+          case '/':  if (r !== 0) result = l / r; break;
+          case '//': if (r !== 0) result = Math.floor(l / r); break;
           case '%': if (r !== 0) result = l % r; break;
           case '**': result = l ** r; break;
           case '==': result = l === r; break;

@@ -7,17 +7,17 @@ fn sum_range(n) {
 }
 
 fn main() {
-  // range(stop) — 0 up to stop
+  # range(stop) — 0 up to stop
   for x in range(5) {
     print(x)
   }
 
-  // range(start, stop)
+  # range(start, stop)
   for x in range(10, 15) {
     print(x)
   }
 
-  // range(start, stop, step)
+  # range(start, stop, step)
   for x in range(0, 20, 4) {
     print(x)
   }

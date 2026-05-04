@@ -8,6 +8,7 @@ function emitExpr(expr, level=0) {
     case 'Identifier':
       return expr.name;
     case 'Binary':
+      if (expr.op === '//') return `Math.floor(${emitExpr(expr.left)} / ${emitExpr(expr.right)})`;
       return `(${emitExpr(expr.left)} ${expr.op} ${emitExpr(expr.right)})`;
     case 'Unary':
       return `(${expr.op}${emitExpr(expr.expr)})`;

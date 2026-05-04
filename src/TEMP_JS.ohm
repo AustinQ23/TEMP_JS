@@ -59,7 +59,7 @@ TEMP_JS {
 
   relop       = "<=" | ">=" | "==" | "!=" | "<" | ">"
   addop       = "+" | "-"
-  mulop       = "*" | "/" | "%"
+  mulop       = "*" | "//" | "/" | "%"
   prefixop    = "-" | "!"
 
   id          = ~keyword letter (alnum | "_")*
@@ -71,5 +71,5 @@ TEMP_JS {
   true        = "true"
   false       = "false"
 
-  space      += "//" (~"\n" any)* "\n"?  -- comment
+  space      += "#" (~"\n" any)* "\n"?  -- comment
 }
