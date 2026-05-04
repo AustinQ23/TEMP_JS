@@ -10,7 +10,7 @@
     <header>
         <a href="https://github.com/AustinQ23/TEMP_JS" target="_blank" class="banner-link">
             <div class="banner-container">
-                <img src="tempJS-banner.png" alt="TEMP_JS Banner" class="banner-img">
+                <img src="tempJS-banner.PNG" alt="TEMP_JS Banner" class="banner-img">
             </div>
         </a>
     </header>
@@ -107,21 +107,49 @@ print(is_valid)</textarea>
             <pre id="out5" class="output hidden"></pre>
         </section>
 
-        <section id="bios">
-            <h2>Meet the Developers</h2>
+        <section id="creators">
+            <h2>The Creators</h2>
             <div class="bios">
+                
                 <div class="bio-card">
-                    <h3>Colin Bajo-Smith</h3>
-                    <p>Colin specializes in grammar design and test-driven compiler development. He ensures that every syntax tree is as beautiful as the code it parses.</p>
+                    <div class="bio-sidebar">
+                        <div class="img-wrapper">
+                            <img src="./quinn.png" alt="Quinn Austin">
+                        </div>
+                    </div>
+                    <div class="bio-content">
+                        <h3>Quinn Austin</h3>
+                        <p>Focused on the semantic analyzer and type inference engine, along with the 
+                            JavaScript backend. Quinn built out the core logic that makes TEMP_JS safe and reliable.</p>
+                    </div>
                 </div>
+
                 <div class="bio-card">
-                    <h3>Max Lehmann</h3>
-                    <p>Max is the architect behind the semantic analysis phase, ensuring that all those untyped variables play nicely together at runtime.</p>
+                    <div class="bio-sidebar">
+                        <div class="img-wrapper">
+                            <img src="./colin.png" alt="Colin Bajo-Smith">
+                        </div>
+                    </div>
+                    <div class="bio-content">
+                        <h3>Colin Bajo-Smith</h3>
+                        <p>Worked on Ohm grammar design, custom AST generation pipeline, and the webpage/embedded 
+                            compiler. Colin ensured the syntax remained clean and minimalist.</p>
+                    </div>
                 </div>
+
                 <div class="bio-card">
-                    <h3>Quinn Austin</h3>
-                    <p>Quinn focuses on code generation and optimization, turning abstract concepts into executable reality.</p>
+                    <div class="bio-sidebar">
+                        <div class="img-wrapper">
+                            <img src="./max.png" alt="Max Lehmann">
+                        </div>
+                    </div>
+                    <div class="bio-content">
+                        <h3>Max Lehmann</h3>
+                        <p>Created onstant folding and JavaScript code generation. Max ensured that TEMP_JS 
+                            compiles into lightning-fast code that can run on both browsers and within a virtual environment.</p>
+                    </div>
                 </div>
+
             </div>
         </section>
     </div>
@@ -150,7 +178,7 @@ print(is_valid)</textarea>
                 outputDiv.style.color = "#d63031";
                 outputDiv.style.borderColor = "#d63031";
                 const errorMessages = diagnostics.map(d => " - " + d.message).join("\n");
-                outputDiv.innerText = "❌ Compilation Error:\n\n" + errorMessages;
+                outputDiv.innerText = "Compilation Error:\n\n" + errorMessages;
                 return;
             }
 
