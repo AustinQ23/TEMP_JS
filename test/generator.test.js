@@ -13,7 +13,7 @@ function contains(src, fragment) {
   return gen(src).includes(fragment);
 }
 
-// ── Variable declarations ──────────────────────────────────────────────────
+// Variable declarations
 
 test('generator: let declaration becomes const', () => {
   assert.ok(contains('fn f() { let x = 5 }', 'const x = 5'));
@@ -23,7 +23,7 @@ test('generator: mut declaration becomes let', () => {
   assert.ok(contains('fn f() { mut x = 5 }', 'let x = 5'));
 });
 
-// ── Print ──────────────────────────────────────────────────────────────────
+// Print
 
 test('generator: print becomes console.log', () => {
   assert.ok(contains('fn f() { print(42) }', 'console.log(42)'));
@@ -33,7 +33,7 @@ test('generator: print of a string literal', () => {
   assert.ok(contains('fn f() { print("hi") }', 'console.log("hi")'));
 });
 
-// ── Control flow ───────────────────────────────────────────────────────────
+// Control flow
 
 test('generator: if without else', () => {
   const out = gen('fn f() { let x = 5 if x < 10 { print(1) } }');
@@ -55,7 +55,7 @@ test('generator: break becomes break', () => {
   assert.ok(contains('fn f() { while true { break } }', 'break;'));
 });
 
-// ── Functions and calls ────────────────────────────────────────────────────
+// Functions and calls
 
 test('generator: function declaration uses function keyword', () => {
   assert.ok(contains('fn greet() { }', 'function greet()'));
@@ -78,7 +78,7 @@ test('generator: function call emits call expression', () => {
   assert.ok(contains(src, 'id(7)'));
 });
 
-// ── Auto-call main ─────────────────────────────────────────────────────────
+// Auto-call main
 
 test('generator: main function is auto-called at end of output', () => {
   const out = gen('fn main() { print(1) }');
@@ -90,7 +90,7 @@ test('generator: no main function means no auto-call', () => {
   assert.ok(!out.includes('main()'));
 });
 
-// ── Literals ───────────────────────────────────────────────────────────────
+// Literals
 
 test('generator: boolean true literal', () => {
   assert.ok(contains('fn f() { let b = true }', 'true'));
@@ -106,7 +106,7 @@ test('generator: arithmetic expression preserves parentheses', () => {
   assert.ok(out.includes('x'));
 });
 
-// ── Arrays and for loops ──────────────────────────────────────────────────
+// Arrays and for loops
 
 test('generator: array literal emits JS array', () => {
   assert.ok(contains('fn f() { let a = [1, 2, 3] }', '[1, 2, 3]'));
@@ -135,7 +135,7 @@ test('generator: for loop body is indented', () => {
   assert.ok(out.includes('console.log(x)'));
 });
 
-// ── Unary expressions ─────────────────────────────────────────────────────
+// Unary expressions
 
 test('generator: unary ! emits prefix operator', () => {
   const out = gen('fn f() { let flag = true let x = !flag }');
@@ -147,7 +147,7 @@ test('generator: unary - emits prefix operator', () => {
   assert.ok(out.includes('(-x)'));
 });
 
-// ── Error handling ─────────────────────────────────────────────────────────
+// Error handling
 
 test('generator: generateJS throws on unknown expression type', () => {
   assert.throws(
@@ -156,7 +156,7 @@ test('generator: generateJS throws on unknown expression type', () => {
   );
 });
 
-// ── Block nodes ────────────────────────────────────────────────────────────
+// Block nodes
 
 test('generator: Block node from optimized if-true emits statements inline', () => {
   const out = gen('fn f() { if true { let x = 1 let y = 2 } }');
@@ -164,14 +164,14 @@ test('generator: Block node from optimized if-true emits statements inline', () 
   assert.ok(out.includes('const y = 2'));
 });
 
-// ── Standalone expression statements ──────────────────────────────────────
+// Standalone expression statements 
 
 test('generator: standalone function call as statement emits call with semicolon', () => {
   const out = gen('fn ping() { return 1 } fn f() { ping() }');
   assert.ok(out.includes('ping();'));
 });
 
-// ── Top-level statements ───────────────────────────────────────────────────
+// Top-level statements
 
 test('generator: top-level variable declaration emits outside any function', () => {
   const out = gen('let x = 5');
@@ -179,7 +179,7 @@ test('generator: top-level variable declaration emits outside any function', () 
   assert.ok(!out.includes('main()'));
 });
 
-// ── Assignment ─────────────────────────────────────────────────────────────
+// Assignment
 
 test('generator: reassignment emits plain assignment', () => {
   assert.ok(contains('fn f() { mut x = 1 x = 2 }', 'x = 2'));
@@ -193,4 +193,12 @@ test('generator: power operator emits **', () => {
 test('generator: parenthesized expression is preserved', () => {
   const out = gen('fn f() { let a = [1] let x = a[0] let y = (x + 1) }');
   assert.ok(out.includes('(x + 1)'));
+});
+
+test('generator: generateJS throws on null AST', () => {
+  assert.throws(() => generateJS(null), /Invalid AST for codegen/);
+});
+
+test('generator: generateJS throws on non-Program AST', () => {
+  assert.throws(() => generateJS({ type: 'FunctionDecl' }), /Invalid AST for codegen/);
 });

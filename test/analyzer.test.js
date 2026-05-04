@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { compile } from '../src/compiler.js';
+import { analyze } from '../src/analyzer.js';
 
 function errorsIn(src) {
   return compile(src, 'analyzed').diagnostics.map(d => d.message);
@@ -14,7 +15,7 @@ function hasError(src, substr) {
   return errorsIn(src).some(m => m.includes(substr));
 }
 
-// ── Undeclared identifiers ─────────────────────────────────────────────────
+// Undeclared identifiers
 
 test('analyzer: undeclared variable used inside function', () => {
   assert.ok(hasError('fn f() { let x = y }', 'Undeclared variable'));
@@ -28,7 +29,7 @@ test('analyzer: undeclared function called', () => {
   assert.ok(hasError('fn f() { ghost() }', 'undeclared function'));
 });
 
-// ── Mutability ─────────────────────────────────────────────────────────────
+// Mutability 
 
 test('analyzer: let variable cannot be reassigned in function', () => {
   assert.ok(hasError('fn f() { let x = 1 x = 2 }', 'immutable'));
@@ -42,7 +43,7 @@ test('analyzer: mut variable can be reassigned', () => {
   assert.ok(passes('fn f() { mut x = 1 x = 2 }'));
 });
 
-// ── Break context ──────────────────────────────────────────────────────────
+// Break context 
 
 test('analyzer: break inside while loop is valid', () => {
   assert.ok(passes('fn f() { while true { break } }'));
@@ -60,7 +61,7 @@ test('analyzer: break inside nested while is valid', () => {
   assert.ok(passes('fn f() { while true { while true { break } } }'));
 });
 
-// ── Return context ─────────────────────────────────────────────────────────
+// Return context
 
 test('analyzer: return at top level is an error', () => {
   assert.ok(hasError('return 1', 'outside of a function'));
@@ -74,7 +75,7 @@ test('analyzer: bare return inside function is valid', () => {
   assert.ok(passes('fn f() { return }'));
 });
 
-// ── Function arity ─────────────────────────────────────────────────────────
+// Function arity
 
 test('analyzer: too few arguments', () => {
   assert.ok(hasError('fn add(x, y) { return x } fn main() { add(1) }', 'expects 2'));
@@ -92,7 +93,7 @@ test('analyzer: zero-argument call is valid', () => {
   assert.ok(passes('fn ping() { return 1 } fn main() { let r = ping() }'));
 });
 
-// ── Type errors in expressions ─────────────────────────────────────────────
+// Type errors in expressions
 
 test('analyzer: num + str is a type error', () => {
   assert.ok(hasError('fn f() { let x = 3 + "hello" }', "requires num operands"));
@@ -114,7 +115,7 @@ test('analyzer: str + str is valid (string concatenation)', () => {
   assert.ok(passes('fn f() { let s = "hello" + " world" }'));
 });
 
-// ── Assignment type checking ───────────────────────────────────────────────
+// Assignment type checking
 
 test('analyzer: assigning str to an inferred-num variable is an error', () => {
   assert.ok(hasError('fn f() { mut x = 5 x = "hello" }', "inferred type 'num'"));
@@ -128,7 +129,7 @@ test('analyzer: reassigning same type to mut variable is valid', () => {
   assert.ok(passes('fn f() { mut x = 10 x = 20 }'));
 });
 
-// ── Condition type checking ────────────────────────────────────────────────
+// Condition type checking
 
 test('analyzer: if condition that is a num is an error', () => {
   assert.ok(hasError('fn f() { if 5 { } }', "must be 'bool'"));
@@ -142,7 +143,7 @@ test('analyzer: if condition that is bool is valid', () => {
   assert.ok(passes('fn f() { if true { } }'));
 });
 
-// ── Return type consistency ────────────────────────────────────────────────
+// Return type consistency
 
 test('analyzer: inconsistent return types in same function is an error', () => {
   const src = `
@@ -164,7 +165,7 @@ fn double(x) {
   assert.ok(passes(src));
 });
 
-// ── Scope isolation ────────────────────────────────────────────────────────
+// Scope isolation
 
 test('analyzer: variable declared inside if body does not leak to outer scope', () => {
   const src = `
@@ -177,7 +178,7 @@ fn f() {
   assert.ok(hasError(src, 'Undeclared variable'));
 });
 
-// ── Unary operators ────────────────────────────────────────────────────────
+// Unary operators 
 
 test('analyzer: unary minus on a num is valid', () => {
   assert.ok(passes('fn f() { let x = -5 }'));
@@ -195,7 +196,7 @@ test('analyzer: unary ! on a num is an error', () => {
   assert.ok(hasError('fn f() { let x = !5 }', "Unary '!' requires bool"));
 });
 
-// ── Comparison type checking ───────────────────────────────────────────────
+// Comparison type checking
 
 test('analyzer: == with mixed types is an error', () => {
   assert.ok(hasError('fn f() { let x = 3 == "hello" }', "Cannot compare"));
@@ -205,13 +206,13 @@ test('analyzer: != with mixed types is an error', () => {
   assert.ok(hasError('fn f() { let x = 3 != "hello" }', "Cannot compare"));
 });
 
-// ── Assign to undeclared ───────────────────────────────────────────────────
+// Assign to undeclared 
 
 test('analyzer: assign to completely undeclared variable is an error', () => {
   assert.ok(hasError('fn f() { x = 5 }', 'undeclared'));
 });
 
-// ── Arrays ─────────────────────────────────────────────────────────────────
+// Arrays 
 
 test('analyzer: array literal infers type array', () => {
   assert.ok(passes('fn f() { let a = [1, 2, 3] }'));
@@ -237,7 +238,7 @@ test('analyzer: index-assigning to an undeclared variable is an error', () => {
   assert.ok(hasError('fn f() { ghost[0] = 1 }', 'undeclared'));
 });
 
-// ── For loops ──────────────────────────────────────────────────────────────
+// For loops
 
 test('analyzer: for loop over an array is valid', () => {
   assert.ok(passes('fn f() { let a = [1, 2, 3] for x in a { print(x) } }'));
@@ -279,4 +280,27 @@ test('analyzer: && with bool operands is valid', () => {
 
 test('analyzer: || with bool operands is valid', () => {
   assert.ok(passes('fn f() { let x = true || false }'));
+});
+
+// ── Null AST guard ──────
+
+test('analyzer: analyze(null) returns empty errors array', () => {
+  assert.deepEqual(analyze(null), []);
+});
+
+test('analyzer: VarDecl with null init does not crash inferType', () => {
+  const errors = analyze({
+    type: 'Program',
+    body: [{
+      type: 'FunctionDecl',
+      name: 'f',
+      params: [],
+      body: [{ type: 'VarDecl', kind: 'let', name: 'x', init: null }]
+    }]
+  });
+  assert.ok(Array.isArray(errors));
+});
+
+test('analyzer: function with two returns of same type produces no inconsistency error', () => {
+  assert.ok(passes('fn f() { if true { return 1 } else { return 1 } }'));
 });

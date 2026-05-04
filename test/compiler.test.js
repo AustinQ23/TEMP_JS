@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { compile } from '../src/compiler.js';
 
-// ── Parse errors ──────────────────────────────────────────────────────────
+// Parse errors
 
 test('compiler: syntax error returns diagnostics and null result', () => {
   const { result, diagnostics } = compile('fn ()', 'js');
@@ -17,7 +17,7 @@ test('compiler: all diagnostics have a message property', () => {
   }
 });
 
-// ── Pipeline stages ────────────────────────────────────────────────────────
+// Pipeline stages
 
 test('compiler: outputType "parsed" returns string confirmation on valid input', () => {
   const { result, diagnostics } = compile('fn f() { }', 'parsed');
@@ -44,7 +44,7 @@ test('compiler: outputType "js" returns a string on valid input', () => {
   assert.equal(typeof result, 'string');
 });
 
-// ── Semantic errors short-circuit code generation ─────────────────────────
+// Semantic errors short-circuit code generation
 
 test('compiler: semantic error prevents JS output', () => {
   const { result, diagnostics } = compile('fn f() { let x = 1 x = 2 }', 'js');
@@ -52,7 +52,7 @@ test('compiler: semantic error prevents JS output', () => {
   assert.ok(diagnostics.length > 0);
 });
 
-// ── End-to-end programs ────────────────────────────────────────────────────
+// End-to-end programs
 
 test('compiler: complete program compiles to runnable JS', () => {
   const src = `

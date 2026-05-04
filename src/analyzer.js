@@ -1,5 +1,4 @@
 // Type-inferring semantic analyzer.
-// Types are inferred from initializers and literal values — no annotations required.
 // 'unknown' is used when a type cannot be determined (e.g. function parameters);
 // errors are only reported when both sides of an operation have known, incompatible types.
 
@@ -216,7 +215,6 @@ export function analyze(ast) {
           break;
 
         default:
-          // Expression used as a statement (e.g. a standalone function call).
           inferType(s, env);
           break;
       }

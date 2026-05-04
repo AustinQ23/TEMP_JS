@@ -1,4 +1,4 @@
-import { buildAST } from './core.js';
+import { buildAST } from './parser.js';
 import { analyze } from './analyzer.js';
 import { optimize } from './optimizer.js';
 import { generateJS } from './generator.js';
@@ -30,7 +30,7 @@ export function compile(source, outputType = 'js') {
     return { result: optimizedAst, diagnostics: [] };
   }
 
-  // codegen
+
   const code = generateJS(optimizedAst);
   return { result: code, diagnostics: [] };
 }
