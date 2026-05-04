@@ -1,4 +1,4 @@
-// Very small transpiler from our AST to JavaScript.
+// transpiler from AST to JavaScript.
 function indent(n) { return '  '.repeat(n); }
 
 function emitExpr(expr, level=0) {
