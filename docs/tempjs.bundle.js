@@ -4376,6 +4376,12 @@ semantics.addOperation("ast", {
     const name = id.ast().name;
     return n("VarDecl", { kind: k, name, init: init.ast() });
   },
+  CompoundAssign(id, op, exp) {
+    return n("CompoundAssign", { target: id.ast().name, op: op.sourceString, expr: exp.ast() });
+  },
+  IncrDecr(id, op) {
+    return n("IncrDecr", { target: id.ast().name, op: op.sourceString });
+  },
   Assign(id, _eq, exp) {
     return n("Assign", { target: id.ast().name, expr: exp.ast() });
   },
@@ -5137,6 +5143,10 @@ function emitStmt(stmt, level = 0) {
       const kind = stmt.kind === "mut" ? "let" : "const";
       return `${indent(level)}${kind} ${stmt.name} = ${emitExpr(stmt.init)};`;
     }
+    case "IncrDecr":
+      return `${indent(level)}${stmt.target}${stmt.op};`;
+    case "CompoundAssign":
+      return `${indent(level)}${stmt.target} ${stmt.op} ${emitExpr(stmt.expr)};`;
     case "Assign":
       return `${indent(level)}${stmt.target} = ${emitExpr(stmt.expr)};`;
     case "Print":
