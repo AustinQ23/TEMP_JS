@@ -4292,6 +4292,7 @@ TEMP_JS {
   Assign         = id "=" Exp
   Print       = "print" "(" Exp ")"
   IfStmt      = "if" Exp "{" Statement* "}" "else" "{" Statement* "}" -- long
+              | "if" Exp "{" Statement* "}" "else" IfStmt             -- elseif
               | "if" Exp "{" Statement* "}" -- short
   WhileStmt   = "while" Exp "{" Statement* "}"
   ForStmt     = "for" id "in" Exp "{" Statement* "}"
@@ -4392,6 +4393,9 @@ semantics.addOperation("ast", {
     const thenBody = thenStmts.children.map((s) => s.ast());
     const elseBody = elseStmts.children.map((s) => s.ast());
     return n("If", { cond: cond.ast(), thenBody, elseBody });
+  },
+  IfStmt_elseif(_if, cond, _open, stmts, _close, _else, elseIf) {
+    return n("If", { cond: cond.ast(), thenBody: stmts.children.map((s) => s.ast()), elseBody: [elseIf.ast()] });
   },
   IfStmt_short(_if, cond, _open, stmts, _close) {
     const thenBody = stmts.children.map((s) => s.ast());
@@ -4558,7 +4562,8 @@ function parseFStringParts(raw) {
 var UNKNOWN = "unknown";
 var BUILTINS = {
   range: { minArgs: 1, maxArgs: 3, returnType: "array" },
-  floor_div: { minArgs: 2, maxArgs: 2, returnType: "num" }
+  floor_div: { minArgs: 2, maxArgs: 2, returnType: "num" },
+  len: { minArgs: 1, maxArgs: 1, returnType: "num" }
 };
 function analyze(ast) {
   const errors = [];
@@ -4676,7 +4681,13 @@ function analyze(ast) {
         if (builtin && (expr.args.length < builtin.minArgs || expr.args.length > builtin.maxArgs)) {
           report(`'${expr.callee}' expects ${builtin.minArgs}-${builtin.maxArgs} argument(s), got ${expr.args.length}`, expr);
         }
-        for (const arg of expr.args) inferType(arg, env);
+        const argTypes = expr.args.map((arg) => inferType(arg, env));
+        if (expr.callee === "len" && argTypes.length >= 1) {
+          const t = argTypes[0];
+          if (t && t !== UNKNOWN && t !== "array" && t !== "str") {
+            report(`'len' requires an array or str, got '${t}'`, expr);
+          }
+        }
         const rt = sig ? sig.returnType : builtin.returnType;
         return rt === UNKNOWN ? UNKNOWN : rt;
       }
@@ -5120,6 +5131,7 @@ function emitExpr(expr, level = 0) {
     case "Unary":
       return `(${expr.op}${emitExpr(expr.expr)})`;
     case "Call":
+      if (expr.callee === "len") return `${emitExpr(expr.args[0])}.length`;
       return `${expr.callee}(${expr.args.map((a) => emitExpr(a)).join(", ")})`;
     case "ArrayLiteral":
       return `[${expr.elements.map((e) => emitExpr(e)).join(", ")}]`;
@@ -5153,6 +5165,12 @@ function emitStmt(stmt, level = 0) {
       return `${indent(level)}console.log(${emitExpr(stmt.expr)});`;
     case "If": {
       const thenCode = stmt.thenBody.map((s) => emitStmt(s, level + 1)).join("\n");
+      if (stmt.elseBody?.length === 1 && stmt.elseBody[0].type === "If") {
+        const chained = emitStmt(stmt.elseBody[0], level);
+        return `${indent(level)}if (${emitExpr(stmt.cond)}) {
+${thenCode}
+${indent(level)}} else ${chained.trimStart()}`;
+      }
       const elseCode = stmt.elseBody ? stmt.elseBody.map((s) => emitStmt(s, level + 1)).join("\n") : "";
       return `${indent(level)}if (${emitExpr(stmt.cond)}) {
 ${thenCode}
