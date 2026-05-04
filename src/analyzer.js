@@ -7,6 +7,7 @@ const UNKNOWN = 'unknown';
 const BUILTINS = {
   range:     { minArgs: 1, maxArgs: 3, returnType: 'array' },
   floor_div: { minArgs: 2, maxArgs: 2, returnType: 'num'   },
+  len:       { minArgs: 1, maxArgs: 1, returnType: 'num'   },
 };
 
 export function analyze(ast) {
@@ -143,7 +144,13 @@ export function analyze(ast) {
         if (builtin && (expr.args.length < builtin.minArgs || expr.args.length > builtin.maxArgs)) {
           report(`'${expr.callee}' expects ${builtin.minArgs}-${builtin.maxArgs} argument(s), got ${expr.args.length}`, expr);
         }
-        for (const arg of expr.args) inferType(arg, env);
+        const argTypes = expr.args.map(arg => inferType(arg, env));
+        if (expr.callee === 'len' && argTypes.length >= 1) {
+          const t = argTypes[0];
+          if (t && t !== UNKNOWN && t !== 'array' && t !== 'str') {
+            report(`'len' requires an array or str, got '${t}'`, expr);
+          }
+        }
         const rt = sig ? sig.returnType : builtin.returnType;
         return rt === UNKNOWN ? UNKNOWN : rt;
       }

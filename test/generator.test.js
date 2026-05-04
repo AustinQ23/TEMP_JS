@@ -317,7 +317,7 @@ test('generator: range with three args emits range(start, stop, step)', () => {
   assert.ok(out.includes('range(0, 10, 2)'));
 });
 
-// ── Floor division ─────────────────────────────────────────────────────────
+// Floor division
 
 test('generator: floor division emits Math.floor', () => {
   const out = gen('fn f() { let a = [7] let x = a[0] let y = x // 2 }');
@@ -327,4 +327,30 @@ test('generator: floor division emits Math.floor', () => {
 test('generator: floor division with variables emits Math.floor(a / b)', () => {
   const out = gen('fn f() { let a = [7] let x = a[0] let y = x // 2 }');
   assert.ok(out.includes('Math.floor(x / 2)'));
+});
+
+// else if
+
+test('generator: else if emits else if (not else { if })', () => {
+  const out = gen('fn f() { let x = 1 if x == 1 { print(1) } else if x == 2 { print(2) } else { print(3) } }');
+  assert.ok(out.includes('} else if ('));
+  assert.ok(!out.includes('else {\n    if'));
+});
+
+test('generator: chained else if emits full chain', () => {
+  const out = gen('fn f() { let x = 1 if x == 1 { print(1) } else if x == 2 { print(2) } else if x == 3 { print(3) } else { print(4) } }');
+  assert.ok(out.includes('else if ((x == 2))'));
+  assert.ok(out.includes('else if ((x == 3))'));
+});
+
+// len()
+
+test('generator: len emits .length', () => {
+  const out = gen('fn f() { let a = [1, 2, 3] let n = len(a) }');
+  assert.ok(out.includes('a.length'));
+});
+
+test('generator: len on string emits .length', () => {
+  const out = gen('fn f() { let s = "hi" let n = len(s) }');
+  assert.ok(out.includes('s.length'));
 });

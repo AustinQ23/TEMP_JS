@@ -13,6 +13,7 @@ function emitExpr(expr, level=0) {
     case 'Unary':
       return `(${expr.op}${emitExpr(expr.expr)})`;
     case 'Call':
+      if (expr.callee === 'len') return `${emitExpr(expr.args[0])}.length`;
       return `${expr.callee}(${expr.args.map(a => emitExpr(a)).join(', ')})`;
     case 'ArrayLiteral':
       return `[${expr.elements.map(e => emitExpr(e)).join(', ')}]`;
@@ -47,6 +48,10 @@ function emitStmt(stmt, level=0) {
       return `${indent(level)}console.log(${emitExpr(stmt.expr)});`;
     case 'If': {
       const thenCode = stmt.thenBody.map(s => emitStmt(s, level+1)).join('\n');
+      if (stmt.elseBody?.length === 1 && stmt.elseBody[0].type === 'If') {
+        const chained = emitStmt(stmt.elseBody[0], level);
+        return `${indent(level)}if (${emitExpr(stmt.cond)}) {\n${thenCode}\n${indent(level)}} else ${chained.trimStart()}`;
+      }
       const elseCode = stmt.elseBody ? stmt.elseBody.map(s => emitStmt(s, level+1)).join('\n') : '';
       return `${indent(level)}if (${emitExpr(stmt.cond)}) {\n${thenCode}\n${indent(level)}}${elseCode ? ' else {\n' + elseCode + '\n' + indent(level) + '}' : ''}`;
     }

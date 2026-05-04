@@ -432,7 +432,7 @@ test('optimizer: fstring with mixed parts folds only interp', () => {
   assert.equal(result.parts[1].expr.value, 6);
 });
 
-// ── Floor division ─────────────────────────────────────────────────────────
+// Floor division
 
 test('optimizer: folds 7 // 2 to 3', () => {
   const result = optimize(bin('//', lit(7), lit(2)));
@@ -449,4 +449,20 @@ test('optimizer: folds -7 // 2 to -4 (floors toward negative infinity)', () => {
 test('optimizer: floor division by zero is not constant folded', () => {
   const result = optimize(bin('//', lit(5), lit(0)));
   assert.equal(result.type, 'Binary');
+});
+
+// else if
+
+test('optimizer: if false else-if chain folds to the else-if node', () => {
+  const inner = { type: 'If', cond: lit(true), thenBody: [{ type: 'Break' }], elseBody: null };
+  const node = { type: 'If', cond: lit(false), thenBody: [{ type: 'Return', expr: null }], elseBody: [inner] };
+  const result = optimize(node);
+  assert.equal(result.type, 'Break');
+});
+
+test('optimizer: if true with else-if chain folds to then body', () => {
+  const inner = { type: 'If', cond: lit(true), thenBody: [{ type: 'Return', expr: null }], elseBody: null };
+  const node = { type: 'If', cond: lit(true), thenBody: [{ type: 'Break' }], elseBody: [inner] };
+  const result = optimize(node);
+  assert.equal(result.type, 'Break');
 });

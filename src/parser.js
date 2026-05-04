@@ -57,6 +57,10 @@ semantics.addOperation('ast', {
     return n('If', { cond: cond.ast(), thenBody, elseBody });
   },
 
+  IfStmt_elseif(_if, cond, _open, stmts, _close, _else, elseIf) {
+    return n('If', { cond: cond.ast(), thenBody: stmts.children.map(s => s.ast()), elseBody: [elseIf.ast()] });
+  },
+
   IfStmt_short(_if, cond, _open, stmts, _close) {
     const thenBody = stmts.children.map(s => s.ast());
     return n('If', { cond: cond.ast(), thenBody, elseBody: null });

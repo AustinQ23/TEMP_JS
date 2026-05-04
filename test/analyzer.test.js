@@ -461,7 +461,7 @@ test('analyzer: range() returns array type (can be indexed)', () => {
   assert.ok(passes('fn f() { let a = range(5) let x = a[0] }'));
 });
 
-// ── Floor division ─────────────────────────────────────────────────────────
+// Floor division
 
 test('analyzer: floor division of two nums is valid', () => {
   assert.ok(passes('fn f() { let x = 7 // 2 }'));
@@ -477,4 +477,52 @@ test('analyzer: floor division with str operand is a type error', () => {
 
 test('analyzer: # comment is ignored', () => {
   assert.ok(passes('fn f() { # this is a comment\nlet x = 1 }'));
+});
+
+// else if
+
+test('analyzer: else if with bool conditions is valid', () => {
+  assert.ok(passes('fn f() { let x = 5 if x == 1 { } else if x == 2 { } else { } }'));
+});
+
+test('analyzer: else if non-bool condition is an error', () => {
+  assert.ok(hasError('fn f() { let x = 5 if x == 1 { } else if x { } }', "must be 'bool'"));
+});
+
+test('analyzer: variable in else if body does not leak', () => {
+  assert.ok(hasError('fn f() { let x = 1 if x == 1 { } else if x == 2 { let inner = 9 } let y = inner }', 'Undeclared variable'));
+});
+
+test('analyzer: chained else if is valid', () => {
+  assert.ok(passes('fn f() { let x = 2 if x == 1 { } else if x == 2 { } else if x == 3 { } else { } }'));
+});
+
+// len()
+
+test('analyzer: len of array is valid', () => {
+  assert.ok(passes('fn f() { let a = [1, 2, 3] let n = len(a) }'));
+});
+
+test('analyzer: len of string is valid', () => {
+  assert.ok(passes('fn f() { let s = "hello" let n = len(s) }'));
+});
+
+test('analyzer: len returns num (can be used in arithmetic)', () => {
+  assert.ok(passes('fn f() { let a = [1, 2, 3] let n = len(a) + 1 }'));
+});
+
+test('analyzer: len of num is an error', () => {
+  assert.ok(hasError('fn f() { let x = 5 let n = len(x) }', "requires an array or str"));
+});
+
+test('analyzer: len of bool is an error', () => {
+  assert.ok(hasError('fn f() { let b = true let n = len(b) }', "requires an array or str"));
+});
+
+test('analyzer: len with no args is an error', () => {
+  assert.ok(hasError('fn f() { let n = len() }', 'expects 1'));
+});
+
+test('analyzer: len with two args is an error', () => {
+  assert.ok(hasError('fn f() { let n = len([1], [2]) }', 'expects 1'));
 });

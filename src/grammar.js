@@ -28,6 +28,7 @@ TEMP_JS {
   Assign         = id "=" Exp
   Print       = "print" "(" Exp ")"
   IfStmt      = "if" Exp "{" Statement* "}" "else" "{" Statement* "}" -- long
+              | "if" Exp "{" Statement* "}" "else" IfStmt             -- elseif
               | "if" Exp "{" Statement* "}" -- short
   WhileStmt   = "while" Exp "{" Statement* "}"
   ForStmt     = "for" id "in" Exp "{" Statement* "}"
