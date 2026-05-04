@@ -2153,13 +2153,13 @@ UnicodeChar.prototype.toFailure = function(grammar2) {
   return new Failure(this, "a Unicode [" + this.categoryOrProp + "] character", "description");
 };
 Alt.prototype.toFailure = function(grammar2) {
-  const fs2 = this.terms.map((t) => t.toFailure(grammar2));
-  const description = "(" + fs2.join(" or ") + ")";
+  const fs = this.terms.map((t) => t.toFailure(grammar2));
+  const description = "(" + fs.join(" or ") + ")";
   return new Failure(this, description, "description");
 };
 Seq.prototype.toFailure = function(grammar2) {
-  const fs2 = this.factors.map((f) => f.toFailure(grammar2));
-  const description = "(" + fs2.join(" ") + ")";
+  const fs = this.factors.map((f) => f.toFailure(grammar2));
+  const description = "(" + fs.join(" ") + ")";
   return new Failure(this, description, "description");
 };
 Iter.prototype.toFailure = function(grammar2) {
@@ -3878,9 +3878,9 @@ function buildGrammar2(match, namespace, optOhmGrammarForTesting, options) {
         decl.withSuperGrammar(namespace[superGrammarName]);
       }
     },
-    Rule_define(n2, fs2, d, _, b) {
+    Rule_define(n2, fs, d, _, b) {
       currentRuleName = n2.visit();
-      currentRuleFormals = fs2.children.map((c) => c.visit())[0] || [];
+      currentRuleFormals = fs.children.map((c) => c.visit())[0] || [];
       if (!decl.defaultStartRule && decl.ensureSuperGrammar() !== Grammar.ProtoBuiltInRules) {
         decl.withDefaultStartRule(currentRuleName);
       }
@@ -3889,9 +3889,9 @@ function buildGrammar2(match, namespace, optOhmGrammarForTesting, options) {
       const source = this.source.trimmed();
       return decl.define(currentRuleName, currentRuleFormals, body, description, source);
     },
-    Rule_override(n2, fs2, _, b) {
+    Rule_override(n2, fs, _, b) {
       currentRuleName = n2.visit();
-      currentRuleFormals = fs2.children.map((c) => c.visit())[0] || [];
+      currentRuleFormals = fs.children.map((c) => c.visit())[0] || [];
       const source = this.source.trimmed();
       decl.ensureSuperGrammarRuleForOverriding(currentRuleName, source);
       overriding = true;
@@ -3899,9 +3899,9 @@ function buildGrammar2(match, namespace, optOhmGrammarForTesting, options) {
       overriding = false;
       return decl.override(currentRuleName, currentRuleFormals, body, null, source);
     },
-    Rule_extend(n2, fs2, _, b) {
+    Rule_extend(n2, fs, _, b) {
       currentRuleName = n2.visit();
-      currentRuleFormals = fs2.children.map((c) => c.visit())[0] || [];
+      currentRuleFormals = fs.children.map((c) => c.visit())[0] || [];
       const body = b.visit();
       const source = this.source.trimmed();
       return decl.extend(currentRuleName, currentRuleFormals, body, null, source);
@@ -3928,8 +3928,8 @@ function buildGrammar2(match, namespace, optOhmGrammarForTesting, options) {
         return builder.alt(...args).withSource(this.source);
       }
     },
-    Formals(opointy, fs2, cpointy) {
-      return fs2.visit();
+    Formals(opointy, fs, cpointy) {
+      return fs.visit();
     },
     Params(opointy, ps, cpointy) {
       return ps.visit();
@@ -4075,8 +4075,8 @@ function initPrototypeParser(grammar2) {
         formals: optFormals.children.map((c) => c.parse())[0] || []
       };
     },
-    Formals(oparen, fs2, cparen) {
-      return fs2.asIteration().children.map((c) => c.parse());
+    Formals(oparen, fs, cparen) {
+      return fs.asIteration().children.map((c) => c.parse());
     },
     name(first, rest) {
       return this.sourceString;
@@ -4263,7 +4263,82 @@ function grammar(source, optNamespace) {
 }
 
 // src/parser.js
-var grammarText = fs.readFileSync(new URL("./TEMP_JS.ohm", import.meta.url), "utf8");
+var grammarText = String.raw`
+TEMP_JS {
+  Program     = Decl+
+  Decl        = FuncDecl | EnumDecl | VarDecl | Statement
+
+  FuncDecl    = "fn" id "(" ListOf<Param, ","> ")" "{" Statement* "}"
+  Param       = id
+
+  Statement   = VarDecl
+              | IndexAssign
+              | Assign
+              | Print
+              | IfStmt
+              | WhileStmt
+              | ForStmt
+              | MatchStmt
+              | ReturnStmt
+              | BreakStmt
+              | ExpStmt
+
+  VarDecl     = ("let" | "mut") id "=" Exp
+  IndexAssign = id "[" Exp "]" "=" Exp
+  Assign      = id "=" Exp
+  Print       = "print" "(" Exp ")"
+  IfStmt      = "if" Exp "{" Statement* "}" "else" "{" Statement* "}" -- long
+              | "if" Exp "{" Statement* "}" -- short
+  WhileStmt   = "while" Exp "{" Statement* "}"
+  ForStmt     = "for" id "in" Exp "{" Statement* "}"
+  EnumDecl    = "enum" id "{" id+ "}"
+  MatchStmt   = "match" Exp "{" MatchArm+ "}"
+  MatchArm    = MatchPattern "=>" "{" Statement* "}"
+  MatchPattern = "_"       -- wildcard
+               | id "." id -- variant
+               | literal   -- lit
+  ReturnStmt  = "return" Exp?
+  BreakStmt   = "break"
+  ExpStmt     = Exp
+
+  Exp         = Exp "||" Exp1         -- or
+              | Exp1
+  Exp1        = Exp1 "&&" Exp2        -- and
+              | Exp2
+  Exp2        = Exp3 relop Exp3       -- compare
+              | Exp3
+  Exp3        = Exp3 addop Exp4       -- add
+              | Exp4
+  Exp4        = Exp4 mulop Exp5       -- multiply
+              | Exp5
+  Exp5        = prefixop Exp6         -- prefix
+              | Exp6
+  Exp6        = Exp7 "**" Exp6        -- power
+              | Exp7
+  Exp7        = Exp7 "[" Exp "]"             -- index
+              | "[" ListOf<Exp, ","> "]"     -- array
+              | literal
+              | id "(" ListOf<Exp, ","> ")"  -- call
+              | id "." id                    -- member
+              | id                           -- id
+              | "(" Exp ")"                  -- parens
+
+  relop       = "<=" | ">=" | "==" | "!=" | "<" | ">"
+  addop       = "+" | "-"
+  mulop       = "*" | "/" | "%"
+  prefixop    = "-" | "!"
+  id          = ~keyword letter (alnum | "_")*
+  keyword     = ("fn" | "let" | "mut" | "if" | "else" | "while" | "for" | "in" | "return" | "break" | "print" | "true" | "false" | "match" | "enum") ~(alnum | "_")
+  literal     = num | fstring | string | true | false
+  num         = digit+ ("." digit+)?
+  fstring     = "f\"" (~"\"" any)* "\""
+  string      = "\"" (~"\"" any)* "\""
+  true        = "true"
+  false       = "false"
+
+  space      += "//" (~"\n" any)* "\n"? -- comment
+}
+`;
 var G = grammar(grammarText);
 var semantics = G.createSemantics();
 var n = (type, props) => ({ type, ...props });
