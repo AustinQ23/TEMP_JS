@@ -8,7 +8,6 @@
 </head>
 <body>
     <header>
-        <a href="https://github.com/AustinQ23/TEMP_JS" target="_blank" class="banner-link">
             <div class="banner-container">
                 <img src="tempJS-banner.PNG" alt="TEMP_JS Banner" class="banner-img">
             </div>
@@ -19,93 +18,301 @@
             <h2>The Story of TEMP_JS</h2>
             <p>TEMP_JS was born out of a desire to help developers focus purely on logic in programming and worry less about superficial rules.
                  It is a statically-typed, transpiled language that embraces simplicity—using intelligent type inference to give you the
-                  safety of a compiled language with the lightweight feel of a scripting language, combining aspects of famous languages
+                 safety of a compiled language with the lightweight feel of a scripting language, combining aspects of famous languages
                    like Python, Rust, JavaScript, and more.</p>
             <p>The core philosophy behind TEMP_JS is safety through minimalism. We ditched semicolons and made variables
                  immutable by default to prevent accidental state changes, requiring an explicit <code>mut</code> keyword to allow
-                  reassignment. Whether you are iterating through arrays or evaluating complex logical expressions, the language
+                 reassignment. Whether you are iterating through arrays or evaluating complex logical expressions, the language
                    gets out of your way and catches your logical errors at compile-time.</p>
             <p>TEMP_JS serves as a complete showcase of modern compiler
                  architecture. Through semantic analysis and constant-folding optimization down to its final JavaScript code generation,
                  everything is designed to make the programmer feel at ease with their work.
         </section>
 
-        <section id="examples">
-            <h2>Example Programs</h2>
-            <p>Here are five complete programs covering every syntactic form in TEMP_JS. Try running them or modifying the code!</p>
+        <section id="features">
+    <h2>Language Features</h2>
 
-            <h3>1. Variables, Math, and Printing</h3>
-            <p>Showcasing variable declarations, mutability, mathematical operations, and the print statement.</p>
-            <textarea id="code1" class="code-editor" spellcheck="false" rows="6">
-let greeting = "Hello, TEMP_JS!"
-mut counter = 10
-counter = counter * 2 + 5
-print(greeting)
-print(counter)</textarea>
-            <button class="btn run-btn" onclick="runCode('code1', 'out1')">Run Code</button>
-            <pre id="out1" class="output hidden"></pre>
+    <h3>Core Type System</h3>
+    <ul>
+        <li><strong>num:</strong> Support for both integers and floating-point numbers.</li>
+        <li><strong>str:</strong> Standard string literals defined by double quotes (<code>"..."</code>).</li>
+        <li><strong>bool:</strong> Boolean logic using <code>true</code> and <code>false</code>.</li>
+        <li><strong>array:</strong> Typed array literals (e.g., <code>[1, 2, 3]</code>).</li>
+        <li><strong>Enums:</strong> User-defined types for categorical data.</li>
+    </ul>
 
-            <h3>2. Functions and Control Flow</h3>
-            <p>Demonstrating function declarations, logical operators, and if/else branching.</p>
-            <textarea id="code2" class="code-editor" spellcheck="false" rows="10">
-fn check_eligibility(age) {
-    if age >= 18 && age < 65 {
-        return true
-    } else {
-        return false
+    <h3>Variables & State</h3>
+    <ul>
+        <li><strong>let x = 5:</strong> Creates an <strong>immutable</strong> binding; the value cannot be changed.</li>
+        <li><strong>mut x = 5:</strong> Creates a <strong>mutable</strong> binding. The variable is type-locked upon initialization but allows reassignment.</li>
+        <li><strong>x = 5:</strong> Reassigns a value to an existing <code>mut</code> variable.</li>
+        <li><strong>a[0] = 99:</strong> Performs index assignment (supported for <code>mut</code> arrays only).</li>
+    </ul>
+
+    <h3>Expressions & Operators</h3>
+    <ul>
+        <li><strong>Arithmetic:</strong> <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code>, and <code>**</code> (exponentiation).</li>
+        <li><strong>Comparison:</strong> <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>.</li>
+        <li><strong>Logical:</strong> <code>&&</code> (AND), <code>||</code> (OR), <code>!</code> (NOT).</li>
+        <li><strong>F-strings:</strong> Powerful template literals using <code>f"hello {name}"</code> syntax.</li>
+        <li><strong>Accessors:</strong> Array indexing via <code>a[i]</code> and enum member access via <code>Color.Red</code>.</li>
+    </ul>
+
+    <h3>Control Flow</h3>
+    <ul>
+        <li><strong>Branching:</strong> <code>if</code> / <code>else</code> blocks for conditional logic.</li>
+        <li><strong>Iteration:</strong> <code>while</code> loops for condition-based entry and <code>for...in</code> loops for array traversal.</li>
+        <li><strong>Pattern Matching:</strong> The <code>match</code> statement provides robust branching with mandatory <strong>exhaustiveness checking</strong>.</li>
+        <li><strong>Jump Statements:</strong> <code>break</code> to exit loops and <code>return</code> (with or without a value) for functions.</li>
+    </ul>
+
+    <h3>Safety & Optimization</h3>
+    <ul>
+        <li><strong>Static Analysis:</strong> Enforces scope isolation, detects undeclared variables, and ensures type consistency.</li>
+        <li><strong>Match Exhaustiveness:</strong> Ensures all possible cases are covered (booleans, enums, or wildcards for nums/strs).</li>
+        <li><strong>Optimizer:</strong> Includes constant folding, dead code elimination, and strength reduction (e.g., simplifying <code>x * 1</code> to <code>x</code>).</li>
+    </ul>
+</section>
+
+<section id="constraints">
+    <h2>Static Semantics & Language Constraints</h2>
+    <p>TEMP_JS features a custom static analyzer that enforces type safety, immutability, and safe control flow before your code ever runs. Below are the rules and constraints enforced by the compiler.</p>
+
+    <h3>Variables and Mutability</h3>
+    <ul>
+        <li><strong>Declaration Required:</strong> All variables must be declared using <code>let</code> or <code>mut</code> before they are accessed or modified.</li>
+        <li><strong>Immutability by Default:</strong> Variables declared with <code>let</code> are strictly immutable. They cannot be reassigned, modified via compound assignments (<code>+=</code>, <code>-=</code>), incremented/decremented (<code>++</code>, <code>--</code>), or have their array indices modified.</li>
+        <li><strong>Loop Variables:</strong> The iteration variable introduced in a <code>for ... in</code> loop is implicitly treated as an immutable <code>let</code> binding within the loop body.</li>
+    </ul>
+
+    <h3>Type System</h3>
+    <ul>
+        <li><strong>Strong Type Inference:</strong> Variable types are inferred from their initial assignment. Any subsequent assignments (for <code>mut</code> variables) must perfectly match the initially inferred type.</li>
+        <li><strong>Math Operations:</strong> The <code>-</code>, <code>*</code>, <code>/</code>, <code>//</code> (floor division), <code>%</code>, and <code>**</code> operators strictly require numeric (<code>num</code>) operands. The <code>+</code> operator requires either both <code>num</code> or both string (<code>str</code>) operands. Unary <code>-</code> requires a <code>num</code> operand.</li>
+        <li><strong>Compound Assignments:</strong> <code>-=</code> requires <code>num</code> operands. <code>+=</code> requires both operands to match and must be either <code>num</code> or <code>str</code>.</li>
+        <li><strong>Comparisons:</strong> Relational operators (<code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>) require numeric operands. Equality operators (<code>==</code>, <code>!=</code>) require both operands to be of the exact same type.</li>
+        <li><strong>Booleans:</strong> <code>if</code> statements, <code>while</code> loops, unary <code>!</code>, and binary logical operators (<code>&&</code>, <code>||</code>) strictly require boolean (<code>bool</code>) expressions.</li>
+    </ul>
+
+    <h3>Functions</h3>
+    <ul>
+        <li><strong>Valid Invocation:</strong> Function calls must reference a previously declared function or a built-in (<code>range</code>, <code>floor_div</code>).</li>
+        <li><strong>Strict Arity:</strong> The number of arguments passed to a function must exactly match the function's declared parameter count.</li>
+        <li><strong>Return Consistency:</strong> A function's return type is inferred from the <em>first</em> evaluated <code>return</code> statement. All subsequent <code>return</code> statements in that same function must yield values of the identical inferred type.</li>
+        <li><strong>Scope Limits:</strong> The <code>return</code> keyword is strictly prohibited outside of a function body.</li>
+    </ul>
+
+    <h3>Arrays and Iteration</h3>
+    <ul>
+        <li><strong>Strict Indexing:</strong> Bracket notation (<code>array[index]</code>) can only be used on variables of type <code>array</code>. Furthermore, the index expression must evaluate to a <code>num</code>.</li>
+        <li><strong>Iterable Loops:</strong> The iterable expression in a <code>for ... in</code> loop must evaluate to an <code>array</code>.</li>
+        <li><strong>Control Flow:</strong> The <code>break</code> statement is only permitted inside the boundaries of a loop body.</li>
+    </ul>
+
+    <h3>Enums and Pattern Matching</h3>
+    <ul>
+        <li><strong>Enum Resolution:</strong> Enums must be declared before use. Any member access (e.g., <code>MyEnum.Variant</code>) must reference a valid variant defined inside that specific enum block.</li>
+        <li><strong>Exhaustive Matching:</strong> All <code>match</code> expressions must be exhaustive to guarantee safe execution. Booleans must match <code>true</code> and <code>false</code>. Numbers and strings strictly require a wildcard arm. Enums must explicitly cover every declared variant or provide a wildcard.</li>
+        <li><strong>Pattern Safety:</strong> A <code>match</code> arm's pattern type must explicitly match the type of the expression being evaluated. Duplicate patterns are not allowed.</li>
+        <li><strong>Wildcard Rules:</strong> If a wildcard pattern (<code>_</code>) is used, it must appear as the very last arm in the <code>match</code> block.</li>
+    </ul>
+
+    <h3>Reserved Keywords</h3>
+    <p>You cannot use the following reserved language keywords as variable or function identifiers:</p>
+    <p><code>fn</code>, <code>let</code>, <code>mut</code>, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>in</code>, <code>return</code>, <code>break</code>, <code>print</code>, <code>true</code>, <code>false</code>, <code>match</code>, <code>enum</code></p>
+</section>
+<section id="examples">
+    <h2>Example Programs</h2>
+    <p>Here are five complete programs covering every syntactic form in TEMP_JS. Try running them or modifying the code!</p>
+
+    <h3>1. Enums and Pattern Matching</h3>
+    <p>This example demonstrates how to define <strong>Enums</strong> and use the <strong>Match</strong> statement to handle data variants. It showcases how TEMP_JS ensures exhaustiveness—meaning you must account for every possible enum variant or boolean state.</p>
+    <textarea id="code1" class="code-editor" spellcheck="false" rows="6">
+enum Direction { North South East West }
+
+enum Season { Spring Summer Fall Winter }
+
+fn describe_direction(d) {
+    match d {
+        Direction.North => { return "Heading north" }
+        Direction.South => { return "Heading south" }
+        Direction.East  => { return "Heading east" }
+        Direction.West  => { return "Heading west" }
     }
 }
-let can_vote = check_eligibility(21)
-print(can_vote)</textarea>
-            <button class="btn run-btn" onclick="runCode('code2', 'out2')">Run Code</button>
-            <pre id="out2" class="output hidden"></pre>
 
-            <h3>3. Arrays and the For-In Loop</h3>
-            <p>Highlighting array creation and iterating through elements using the `for...in` syntax.</p>
-            <textarea id="code3" class="code-editor" spellcheck="false" rows="9">
-let numbers = [10, 20, 30, 40]
-mut sum = 0
-
-for n in numbers {
-    sum = sum + n
+fn is_warm(s) {
+    match s {
+        Season.Spring => { return true }
+        Season.Summer => { return true }
+        Season.Fall   => { return false }
+        Season.Winter => { return false }
+    }
 }
 
-print(sum)</textarea>
-            <button class="btn run-btn" onclick="runCode('code3', 'out3')">Run Code</button>
-            <pre id="out3" class="output hidden"></pre>
+fn main() {
+    let d = Direction.North
+    print(describe_direction(d))
 
-            <h3>4. While Loops, Index Assignment, and Break</h3>
-            <p>Using while loops, modifying specific array indices, and breaking out of loops early.</p>
-            <textarea id="code4" class="code-editor" spellcheck="false" rows="11">
-mut data = [1, 2, 3, 4]
-mut i = 0
-
-while i < 4 {
-    data[i] = data[i] ** 2
-    if data[i] > 10 {
-        break
+    let dirs = [Direction.North, Direction.South, Direction.East, Direction.West]
+    for dir in dirs {
+        print(describe_direction(dir))
     }
-    i = i + 1
+
+    let s = Season.Summer
+    let warm = is_warm(s)
+    match warm {
+        true  => { print("Warm season") }
+        false => { print("Cold season") }
+    }
 }</textarea>
-            <button class="btn run-btn" onclick="runCode('code4', 'out4')">Run Code</button>
-            <pre id="out4" class="output hidden"></pre>
+    <button class="btn run-btn" onclick="runCode('code1', 'out1')">Run Code</button>
+    <pre id="out1" class="output hidden"></pre>
 
-            <h3>5. The Kitchen Sink (Recursion & Arrays)</h3>
-            <p>A recursive function mixed with unary operators to show off the grammar's flexibility.</p>
-            <textarea id="code5" class="code-editor" spellcheck="false" rows="11">
-fn factorial(n) {
-    if n <= 1 {
-        return 1
-    }
-    return n * factorial(n - 1)
+    <h3>2. Functions and String Interpolation</h3>
+    <p>Here you can see <strong>Function declarations</strong> in action, along with <strong>f-strings</strong> (formatted strings). This example also highlights how scoping works within <code>if/else</code> branches and how the compiler handles mathematical expressions within print statements.</p>
+    <textarea id="code2" class="code-editor" spellcheck="false" rows="10">
+fn greet(name) {
+  return f"Hello, {name}!"
 }
 
-let result = factorial(5)
-let is_valid = !(result == 0)
-print(is_valid)</textarea>
-            <button class="btn run-btn" onclick="runCode('code5', 'out5')">Run Code</button>
-            <pre id="out5" class="output hidden"></pre>
-        </section>
+fn describe_score(score) {
+  let grade = "unknown"
+  if score >= 90 {
+    let grade = "A"
+    print(f"Score: {score} — Grade: {grade}")
+  } else {
+    if score >= 80 {
+      let grade = "B"
+      print(f"Score: {score} — Grade: {grade}")
+    } else {
+      print(f"Score: {score} — Grade: {grade}")
+    }
+  }
+}
+
+fn main() {
+  let name = "Alice"
+  let msg = greet(name)
+  print(msg)
+
+  let x = 7
+  let y = 3
+  print(f"{x} + {y} = {x + y}")
+  print(f"{x} * {y} = {x * y}")
+
+  describe_score(95)
+  describe_score(82)
+  describe_score(70)
+}</textarea>
+    <button class="btn run-btn" onclick="runCode('code2', 'out2')">Run Code</button>
+    <pre id="out2" class="output hidden"></pre>
+
+    <h3>3. Conditionals and While Loops</h3>
+    <p>This program utilizes a <strong>while loop</strong> and <strong>mutable variables</strong> to iterate through a sequence. It combines these with a <code>match</code> statement to transform raw numbers into descriptive strings, demonstrating how the language handles logic flow and state changes.</p>
+    <textarea id="code3" class="code-editor" spellcheck="false" rows="9">
+fn day_name(n) {
+    match n {
+        1 => { return "Monday" }
+        2 => { return "Tuesday" }
+        3 => { return "Wednesday" }
+        4 => { return "Thursday" }
+        5 => { return "Friday" }
+        6 => { return "Saturday" }
+        7 => { return "Sunday" }
+        _ => { return "Unknown" }
+    }
+}
+
+fn is_weekend(n) {
+    match n {
+        6 => { return true }
+        7 => { return true }
+        _ => { return false }
+    }
+}
+
+fn day_type(weekend) {
+    match weekend {
+        true => { return "Weekend" }
+        false => { return "Weekday" }
+    }
+}
+
+fn main() {
+    mut day = 1
+    while day <= 7 {
+        let name = day_name(day)
+        let weekend = is_weekend(day)
+        let kind = day_type(weekend)
+        print(name)
+        print(kind)
+        day = day + 1
+    }
+}</textarea>
+    <button class="btn run-btn" onclick="runCode('code3', 'out3')">Run Code</button>
+    <pre id="out3" class="output hidden"></pre>
+
+    <h3>4. Ranges and For-In Loops</h3>
+    <p>This example showcases the built-in <strong>range()</strong> function. It demonstrates the three ways to call range (single argument, start/stop, and start/stop/step) and how to use the <strong>for-in</strong> loop to iterate through these sequences efficiently.</p>
+    <textarea id="code4" class="code-editor" spellcheck="false" rows="11">
+fn sum_range(n) {
+  mut total = 0
+  for i in range(n) {
+    total += i
+  }
+  return total
+}
+
+fn main() {
+  # range(stop) — 0 up to stop
+  for x in range(5) {
+    print(x)
+  }
+
+  # range(start, stop)
+  for x in range(10, 15) {
+    print(x)
+  }
+
+  # range(start, stop, step)
+  for x in range(0, 20, 4) {
+    print(x)
+  }
+
+  let s = sum_range(10)
+  print(f"Sum 0..9 = {s}")
+}</textarea>
+    <button class="btn run-btn" onclick="runCode('code4', 'out4')">Run Code</button>
+    <pre id="out4" class="output hidden"></pre>
+
+    <h3>5. Arrays and Mutability</h3>
+    <p>The "Kitchen Sink" example focuses on <strong>Array manipulation</strong>. It shows how to pass arrays to functions, iterate over them, and perform <strong>index assignment</strong> on <code>mut</code> arrays. It serves as a practical look at how TEMP_JS handles collections and data mutability.</p>
+    <textarea id="code5" class="code-editor" spellcheck="false" rows="11">
+fn sum(nums) {
+    mut total = 0
+    for n in nums {
+        total = total + n
+    }
+    return total
+}
+
+fn main() {
+    let nums = [1, 2, 3, 4, 5]
+    let result = sum(nums)
+    print(result)
+
+    mut scores = [10, 20, 30]
+    scores[0] = 99
+    print(scores[0])
+
+    for x in [10, 20, 30] {
+        print(x)
+    }
+}</textarea>
+    <button class="btn run-btn" onclick="runCode('code5', 'out5')">Run Code</button>
+    <pre id="out5" class="output hidden"></pre>
+</section>
 
         <section id="creators">
             <h2>The Creators</h2>
@@ -145,8 +352,8 @@ print(is_valid)</textarea>
                     </div>
                     <div class="bio-content">
                         <h3>Max Lehmann</h3>
-                        <p>Created onstant folding and JavaScript code generation. Max ensured that TEMP_JS 
-                            compiles into lightning-fast code that can run on both browsers and within a virtual environment.</p>
+                        <p>Created constant folding and JavaScript code generation. Max designed and implemented everything 
+                            relating to the test suites and code flow.</p>
                     </div>
                 </div>
 
@@ -156,6 +363,9 @@ print(is_valid)</textarea>
 
     <footer>
         <p>&copy; 2026 TEMP_JS Team. Built for CMSI-3802.</p>
+        <a href="https://github.com/AustinQ23/TEMP_JS/" target="_blank">GitHub</a> | 
+        <a href="https://github.com/AustinQ23/TEMP_JS/blob/main/src/TEMP_JS.ohm" target="_blank">TEMP_JS Grammar</a>
+    </p>
     </footer>
 
     <script type="module">
