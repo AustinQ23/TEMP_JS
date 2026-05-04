@@ -19,7 +19,7 @@ function ast(src) {
   return tree;
 }
 
-// ── Parse error ────────────────────────────────────────────────────────────
+// Parse error
 
 test('parser: invalid syntax returns null ast and errors', () => {
   const { ast: tree, errors } = buildAST('fn f() {');
@@ -27,7 +27,7 @@ test('parser: invalid syntax returns null ast and errors', () => {
   assert.ok(errors.length > 0);
 });
 
-// ── Program / Decl ─────────────────────────────────────────────────────────
+// Program / Decl
 
 test('parser: minimal function produces Program with FunctionDecl', () => {
   const tree = ast('fn f() { }');
@@ -36,7 +36,7 @@ test('parser: minimal function produces Program with FunctionDecl', () => {
   assert.equal(tree.body[0].name, 'f');
 });
 
-// ── FuncDecl / Param ───────────────────────────────────────────────────────
+// FuncDecl / Param
 
 test('parser: function params produce Param nodes', () => {
   const tree = ast('fn add(x, y) { return x }');
@@ -47,7 +47,7 @@ test('parser: function params produce Param nodes', () => {
   assert.equal(fn.params[1].name, 'y');
 });
 
-// ── VarDecl ────────────────────────────────────────────────────────────────
+// VarDecl
 
 test('parser: let declaration produces VarDecl with kind let', () => {
   const tree = ast('fn f() { let x = 1 }');
@@ -62,7 +62,7 @@ test('parser: mut declaration produces VarDecl with kind mut', () => {
   assert.equal(tree.body[0].body[0].kind, 'mut');
 });
 
-// ── Assign ─────────────────────────────────────────────────────────────────
+// Assign
 
 test('parser: assignment produces Assign node', () => {
   const tree = ast('fn f() { mut x = 1 x = 2 }');
@@ -71,14 +71,14 @@ test('parser: assignment produces Assign node', () => {
   assert.equal(stmt.target, 'x');
 });
 
-// ── Print ──────────────────────────────────────────────────────────────────
+// Print
 
 test('parser: print produces Print node', () => {
   const tree = ast('fn f() { print(1) }');
   assert.equal(tree.body[0].body[0].type, 'Print');
 });
 
-// ── IfStmt_long ────────────────────────────────────────────────────────────
+// IfStmt_long
 
 test('parser: if-else produces If node with non-null elseBody', () => {
   const tree = ast('fn f() { if true { let a = 1 } else { let b = 2 } }');
@@ -88,7 +88,7 @@ test('parser: if-else produces If node with non-null elseBody', () => {
   assert.ok(Array.isArray(stmt.elseBody));
 });
 
-// ── IfStmt_short ───────────────────────────────────────────────────────────
+// IfStmt_short
 
 test('parser: if without else produces If node with null elseBody', () => {
   const tree = ast('fn f() { if true { } }');
@@ -97,14 +97,14 @@ test('parser: if without else produces If node with null elseBody', () => {
   assert.equal(stmt.elseBody, null);
 });
 
-// ── WhileStmt ──────────────────────────────────────────────────────────────
+// WhileStmt
 
 test('parser: while produces While node', () => {
   const tree = ast('fn f() { while true { } }');
   assert.equal(tree.body[0].body[0].type, 'While');
 });
 
-// ── ForStmt ────────────────────────────────────────────────────────────────
+// ForStmt
 
 test('parser: for loop produces For node with variable and iterable', () => {
   const tree = ast('fn f() { let a = [1] for x in a { } }');
@@ -114,7 +114,7 @@ test('parser: for loop produces For node with variable and iterable', () => {
   assert.ok(stmt.iterable !== null);
 });
 
-// ── IndexAssign ────────────────────────────────────────────────────────────
+// IndexAssign
 
 test('parser: index assignment produces IndexAssign node', () => {
   const tree = ast('fn f() { mut a = [1] a[0] = 2 }');
@@ -123,7 +123,7 @@ test('parser: index assignment produces IndexAssign node', () => {
   assert.equal(stmt.target, 'a');
 });
 
-// ── ReturnStmt ─────────────────────────────────────────────────────────────
+// ReturnStmt
 
 test('parser: return with expression has non-null expr', () => {
   const tree = ast('fn f() { return 1 }');
@@ -139,21 +139,21 @@ test('parser: bare return has null expr', () => {
   assert.equal(stmt.expr, null);
 });
 
-// ── BreakStmt ──────────────────────────────────────────────────────────────
+// BreakStmt
 
 test('parser: break produces Break node', () => {
   const tree = ast('fn f() { while true { break } }');
   assert.equal(tree.body[0].body[0].body[0].type, 'Break');
 });
 
-// ── ExpStmt ────────────────────────────────────────────────────────────────
+// ExpStmt
 
 test('parser: expression statement passes through as expression node', () => {
   const tree = ast('fn f() { 1 + 2 }');
   assert.equal(tree.body[0].body[0].type, 'Binary');
 });
 
-// ── Exp_or ─────────────────────────────────────────────────────────────────
+// Exp_or
 
 test('parser: || produces Binary node with op ||', () => {
   const tree = ast('fn f() { let x = true || false }');
@@ -162,7 +162,7 @@ test('parser: || produces Binary node with op ||', () => {
   assert.equal(expr.op, '||');
 });
 
-// ── Exp1_and ───────────────────────────────────────────────────────────────
+// Exp1_and
 
 test('parser: && produces Binary node with op &&', () => {
   const tree = ast('fn f() { let x = true && false }');
@@ -171,7 +171,7 @@ test('parser: && produces Binary node with op &&', () => {
   assert.equal(expr.op, '&&');
 });
 
-// ── Exp2_compare / relop ───────────────────────────────────────────────────
+// Exp2_compare / relop
 
 test('parser: == comparison routes through relop semantic action', () => {
   const tree = ast('fn f() { let x = 1 == 2 }');
@@ -205,7 +205,7 @@ test('parser: >= comparison routes through relop semantic action', () => {
   assert.equal(tree.body[0].body[0].init.op, '>=');
 });
 
-// ── Exp3_add / addop ───────────────────────────────────────────────────────
+// Exp3_add / addop
 
 test('parser: + routes through addop semantic action', () => {
   const tree = ast('fn f() { let x = 1 + 2 }');
@@ -217,7 +217,7 @@ test('parser: - routes through addop semantic action', () => {
   assert.equal(tree.body[0].body[0].init.op, '-');
 });
 
-// ── Exp4_multiply / mulop ──────────────────────────────────────────────────
+// Exp4_multiply / mulop
 
 test('parser: * routes through mulop semantic action', () => {
   const tree = ast('fn f() { let x = 2 * 3 }');
@@ -234,7 +234,7 @@ test('parser: % routes through mulop semantic action', () => {
   assert.equal(tree.body[0].body[0].init.op, '%');
 });
 
-// ── Exp5_prefix / prefixop ────────────────────────────────────────────────
+// Exp5_prefix / prefixop
 
 test('parser: unary - routes through prefixop semantic action', () => {
   const tree = ast('fn f() { let x = -5 }');
@@ -248,7 +248,7 @@ test('parser: unary ! routes through prefixop semantic action', () => {
   assert.equal(tree.body[0].body[0].init.op, '!');
 });
 
-// ── Exp6_power ─────────────────────────────────────────────────────────────
+// Exp6_power
 
 test('parser: ** produces Binary node with op **', () => {
   const tree = ast('fn f() { let x = 2 ** 3 }');
@@ -257,7 +257,7 @@ test('parser: ** produces Binary node with op **', () => {
   assert.equal(expr.op, '**');
 });
 
-// ── Exp7_index ─────────────────────────────────────────────────────────────
+// Exp7_index
 
 test('parser: array index access produces IndexAccess node', () => {
   const tree = ast('fn f() { let a = [1] let x = a[0] }');
@@ -265,7 +265,7 @@ test('parser: array index access produces IndexAccess node', () => {
   assert.equal(expr.type, 'IndexAccess');
 });
 
-// ── Exp7_array ─────────────────────────────────────────────────────────────
+// Exp7_array
 
 test('parser: array literal produces ArrayLiteral with correct element count', () => {
   const tree = ast('fn f() { let a = [1, 2, 3] }');
@@ -274,7 +274,7 @@ test('parser: array literal produces ArrayLiteral with correct element count', (
   assert.equal(expr.elements.length, 3);
 });
 
-// ── Exp7_call ──────────────────────────────────────────────────────────────
+// Exp7_call
 
 test('parser: function call produces Call node with callee and args', () => {
   const tree = ast('fn foo() { return 1 } fn f() { let x = foo() }');
@@ -284,7 +284,7 @@ test('parser: function call produces Call node with callee and args', () => {
   assert.equal(expr.args.length, 0);
 });
 
-// ── Exp7_id ────────────────────────────────────────────────────────────────
+// Exp7_id
 
 test('parser: bare identifier produces Identifier node', () => {
   const tree = ast('fn f(a) { return a }');
@@ -293,7 +293,7 @@ test('parser: bare identifier produces Identifier node', () => {
   assert.equal(expr.name, 'a');
 });
 
-// ── Exp7_parens ────────────────────────────────────────────────────────────
+// Exp7_parens
 
 test('parser: parenthesized expression is transparent', () => {
   const tree = ast('fn f() { let x = (1 + 2) }');
@@ -302,7 +302,7 @@ test('parser: parenthesized expression is transparent', () => {
   assert.equal(expr.op, '+');
 });
 
-// ── Literals ───────────────────────────────────────────────────────────────
+// Literals
 
 test('parser: integer literal produces Literal with numeric value', () => {
   const tree = ast('fn f() { let x = 42 }');
@@ -333,7 +333,7 @@ test('parser: false literal produces Literal with value false', () => {
   assert.equal(tree.body[0].body[0].init.value, false);
 });
 
-// ── Grammar validity ───────────────────────────────────────────────────────
+// Grammar validity
 
 test('valid: simple function with if-else and return', () => {
   const code = `
@@ -379,7 +379,7 @@ fn main() {
   assert.equal(r.ok, true, r.message);
 });
 
-// ── validateDeclarations ───────────────────────────────────────────────────
+// validateDeclarations
 
 test('semantics: assignment without declaration should error', () => {
   const code = `

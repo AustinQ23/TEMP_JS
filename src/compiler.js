@@ -30,7 +30,7 @@ export function compile(source, outputType = 'js') {
     return { result: optimizedAst, diagnostics: [] };
   }
 
-  // codegen
+
   const code = generateJS(optimizedAst);
   return { result: code, diagnostics: [] };
 }

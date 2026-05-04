@@ -1,14 +1,12 @@
 // A lightweight semantic validator that enforces:
 // - assignments must target a previously declared variable (with let or mut) in the same function scope
 // - assignments to `let` declarations are errors (immutable)
-// This is intentionally simple and operates on source text using brace-matching and line scanning.
 
 import { analyze as analyzeAst } from './analyzer.js';
 
 export function validateDeclarations(src) {
   const errors = [];
 
-  // Helper: find matching closing brace starting at index of an opening brace
   function findMatchingBrace(s, startIndex) {
     let depth = 0;
     for (let i = startIndex; i < s.length; i++) {
