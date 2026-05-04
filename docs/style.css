@@ -76,18 +76,15 @@ h2 {
     margin-top: 3rem;
 }
 
-/* Update these specific sections */
 #features, #constraints {
     font-size: 0.95rem;
 }
 
-/* Optional: If you want the list items to be even more compact */
 #features ul, #constraints ul {
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
 }
 
-/* Ensure headings within these sections stay legible */
 #features h3, #constraints h3 {
     font-size: 1.2rem;
     margin-top: 1.5rem;
@@ -170,7 +167,28 @@ h2 {
     line-height: 1.6;
 }
 
-/* Buttons */
+@media (max-width: 768px) {
+    .bio-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+        gap: 1.5rem;
+    }
+
+    .bio-sidebar {
+        align-items: center;
+        width: 100%;
+    }
+
+    .bio-content h3 {
+        font-size: 1.25rem; 
+    }
+
+    .bio-content p {
+        font-size: 1rem;
+    }
+}
+
 .btn {
     display: inline-block;
     font-family: 'Aptos Display', 'Inter', -apple-system, sans-serif;
