@@ -4262,7 +4262,7 @@ function grammar(source, optNamespace) {
   return _grammar(source, optNamespace);
 }
 
-// src/parser.js
+// src/grammar.js
 var grammarText = String.raw`
 TEMP_JS {
   Program     = Decl+
@@ -4273,6 +4273,8 @@ TEMP_JS {
 
   Statement   = VarDecl
               | IndexAssign
+              | CompoundAssign
+              | IncrDecr
               | Assign
               | Print
               | IfStmt
@@ -4283,9 +4285,11 @@ TEMP_JS {
               | BreakStmt
               | ExpStmt
 
-  VarDecl     = ("let" | "mut") id "=" Exp
-  IndexAssign = id "[" Exp "]" "=" Exp
-  Assign      = id "=" Exp
+  VarDecl        = ("let" | "mut") id "=" Exp
+  IndexAssign    = id "[" Exp "]" "=" Exp
+  CompoundAssign = id ("+=" | "-=") Exp
+  IncrDecr       = id ("++" | "--")
+  Assign         = id "=" Exp
   Print       = "print" "(" Exp ")"
   IfStmt      = "if" Exp "{" Statement* "}" "else" "{" Statement* "}" -- long
               | "if" Exp "{" Statement* "}" -- short
@@ -4325,8 +4329,9 @@ TEMP_JS {
 
   relop       = "<=" | ">=" | "==" | "!=" | "<" | ">"
   addop       = "+" | "-"
-  mulop       = "*" | "/" | "%"
+  mulop       = "*" | "//" | "/" | "%"
   prefixop    = "-" | "!"
+
   id          = ~keyword letter (alnum | "_")*
   keyword     = ("fn" | "let" | "mut" | "if" | "else" | "while" | "for" | "in" | "return" | "break" | "print" | "true" | "false" | "match" | "enum") ~(alnum | "_")
   literal     = num | fstring | string | true | false
@@ -4336,9 +4341,11 @@ TEMP_JS {
   true        = "true"
   false       = "false"
 
-  space      += "//" (~"\n" any)* "\n"? -- comment
+  space      += "#" (~"\n" any)* "\n"?  -- comment
 }
 `;
+
+// src/parser.js
 var G = grammar(grammarText);
 var semantics = G.createSemantics();
 var n = (type, props) => ({ type, ...props });
@@ -4544,7 +4551,8 @@ function parseFStringParts(raw) {
 // src/analyzer.js
 var UNKNOWN = "unknown";
 var BUILTINS = {
-  range: { minArgs: 1, maxArgs: 3, returnType: "array" }
+  range: { minArgs: 1, maxArgs: 3, returnType: "array" },
+  floor_div: { minArgs: 2, maxArgs: 2, returnType: "num" }
 };
 function analyze(ast) {
   const errors = [];
@@ -4675,6 +4683,41 @@ function analyze(ast) {
         case "VarDecl": {
           const initType = inferType(s.init, env);
           env[s.name] = { kind: s.kind, type: initType ?? UNKNOWN };
+          break;
+        }
+        case "IncrDecr": {
+          const info = env[s.target];
+          if (!info) {
+            report(`Assignment to undeclared variable '${s.target}'`, s);
+          } else if (info.kind === "let") {
+            report(`Cannot modify immutable variable '${s.target}' (declared with 'let')`, s);
+          } else if (info.type && info.type !== UNKNOWN && info.type !== "num") {
+            report(`'${s.op}' requires a num variable, got '${info.type}'`, s);
+          }
+          break;
+        }
+        case "CompoundAssign": {
+          const info = env[s.target];
+          if (!info) {
+            report(`Assignment to undeclared variable '${s.target}'`, s);
+          } else if (info.kind === "let") {
+            report(`Cannot modify immutable variable '${s.target}' (declared with 'let')`, s);
+          } else {
+            const exprType = inferType(s.expr, env);
+            const bothKnown = info.type !== UNKNOWN && exprType && exprType !== UNKNOWN;
+            if (s.op === "-=") {
+              if (bothKnown && (info.type !== "num" || exprType !== "num")) {
+                report(`'-=' requires num operands, got '${info.type}' and '${exprType}'`, s);
+              }
+            } else {
+              if (bothKnown && info.type !== exprType) {
+                report(`Cannot use '+=' with '${info.type}' and '${exprType}'`, s);
+              }
+              if (bothKnown && info.type !== "num" && info.type !== "str") {
+                report(`'+=' requires num or str operands, got '${info.type}'`, s);
+              }
+            }
+          }
           break;
         }
         case "Assign": {

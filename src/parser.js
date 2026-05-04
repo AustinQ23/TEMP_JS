@@ -1,86 +1,8 @@
-import fs from 'fs';
 import * as ohm from 'ohm-js';
+import { grammarText } from './grammar.js';
 
-const grammarText = String.raw`
-TEMP_JS {
-  Program     = Decl+
-  Decl        = FuncDecl | EnumDecl | VarDecl | Statement
-
-  FuncDecl    = "fn" id "(" ListOf<Param, ","> ")" "{" Statement* "}"
-  Param       = id
-
-  Statement   = VarDecl
-              | IndexAssign
-              | Assign
-              | Print
-              | IfStmt
-              | WhileStmt
-              | ForStmt
-              | MatchStmt
-              | ReturnStmt
-              | BreakStmt
-              | ExpStmt
-
-  VarDecl     = ("let" | "mut") id "=" Exp
-  IndexAssign = id "[" Exp "]" "=" Exp
-  Assign      = id "=" Exp
-  Print       = "print" "(" Exp ")"
-  IfStmt      = "if" Exp "{" Statement* "}" "else" "{" Statement* "}" -- long
-              | "if" Exp "{" Statement* "}" -- short
-  WhileStmt   = "while" Exp "{" Statement* "}"
-  ForStmt     = "for" id "in" Exp "{" Statement* "}"
-  EnumDecl    = "enum" id "{" id+ "}"
-  MatchStmt   = "match" Exp "{" MatchArm+ "}"
-  MatchArm    = MatchPattern "=>" "{" Statement* "}"
-  MatchPattern = "_"       -- wildcard
-               | id "." id -- variant
-               | literal   -- lit
-  ReturnStmt  = "return" Exp?
-  BreakStmt   = "break"
-  ExpStmt     = Exp
-
-  Exp         = Exp "||" Exp1         -- or
-              | Exp1
-  Exp1        = Exp1 "&&" Exp2        -- and
-              | Exp2
-  Exp2        = Exp3 relop Exp3       -- compare
-              | Exp3
-  Exp3        = Exp3 addop Exp4       -- add
-              | Exp4
-  Exp4        = Exp4 mulop Exp5       -- multiply
-              | Exp5
-  Exp5        = prefixop Exp6         -- prefix
-              | Exp6
-  Exp6        = Exp7 "**" Exp6        -- power
-              | Exp7
-  Exp7        = Exp7 "[" Exp "]"             -- index
-              | "[" ListOf<Exp, ","> "]"     -- array
-              | literal
-              | id "(" ListOf<Exp, ","> ")"  -- call
-              | id "." id                    -- member
-              | id                           -- id
-              | "(" Exp ")"                  -- parens
-
-  relop       = "<=" | ">=" | "==" | "!=" | "<" | ">"
-  addop       = "+" | "-"
-  mulop       = "*" | "/" | "%"
-  prefixop    = "-" | "!"
-  id          = ~keyword letter (alnum | "_")*
-  keyword     = ("fn" | "let" | "mut" | "if" | "else" | "while" | "for" | "in" | "return" | "break" | "print" | "true" | "false" | "match" | "enum") ~(alnum | "_")
-  literal     = num | fstring | string | true | false
-  num         = digit+ ("." digit+)?
-  fstring     = "f\"" (~"\"" any)* "\""
-  string      = "\"" (~"\"" any)* "\""
-  true        = "true"
-  false       = "false"
-
-  space      += "//" (~"\n" any)* "\n"? -- comment
-}
-`;
 const G = ohm.grammar(grammarText);
 const semantics = G.createSemantics();
-
-// Helper constructors
 const n = (type, props) => ({ type, ...props });
 
 semantics.addOperation('ast', {
