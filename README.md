@@ -7,9 +7,9 @@
 
 A lightweight, type-inferred transpiled programming language designed for clarity, safety, and speed.
 
-GitHub Pages Link: https://austinq23.github.io/TEMP_JS/
-Grammar: https://github.com/AustinQ23/TEMP_JS/blob/main/src/TEMP_JS.ohm
-Slides Presentation: https://docs.google.com/presentation/d/1-9eS556S_GLzTtHdNvy_yfjl33GKdhfrVN-T2aLim_o/edit?usp=sharing
+GitHub Pages Link: https://austinq23.github.io/TEMP_JS/ \
+Grammar: https://github.com/AustinQ23/TEMP_JS/blob/main/src/TEMP_JS.ohm \
+Slides Presentation: https://docs.google.com/presentation/d/1-9eS556S_GLzTtHdNvy_yfjl33GKdhfrVN-T2aLim_o/edit?usp=sharing 
 
 ### Authors
 * Quinn Austin
