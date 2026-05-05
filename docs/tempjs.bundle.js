@@ -2942,7 +2942,7 @@ var Semantics = class _Semantics {
     }
   }
   // Returns a wrapper for the given CST `node` in this semantics.
-  // If `node` is already a wrapper, returns `node` itself. 
+  // If `node` is already a wrapper, returns `node` itself.  // TODO: why is this needed?
   wrap(node, source, optBaseInterval) {
     const baseInterval = optBaseInterval || source;
     return node instanceof this.Wrapper ? node : new this.Wrapper(node, source, baseInterval);
@@ -3268,6 +3268,7 @@ var Grammar = class _Grammar {
     ];
     return jsonToJS(`[${recipeElements.join(",")}]`);
   }
+  // TODO: Come up with better names for these methods.
   // TODO: Write the analog of these methods for inherited attributes.
   toOperationActionDictionaryTemplate() {
     return this._toOperationOrAttributeActionDictionaryTemplate();
@@ -3404,6 +3405,7 @@ var GrammarDecl = class {
   ensureSuperGrammar() {
     if (!this.superGrammar) {
       this.withSuperGrammar(
+        // TODO: The conditional expression below is an ugly hack. It's kind of ok because
         // I doubt anyone will ever try to declare a grammar called `BuiltInRules`. Still,
         // we should try to find a better way to do this.
         this.name === "BuiltInRules" ? Grammar.ProtoBuiltInRules : Grammar.BuiltInRules
@@ -4264,7 +4266,7 @@ function grammar(source, optNamespace) {
 var grammarText = String.raw`
 TEMP_JS {
   Program     = Decl+
-  Decl        = FuncDecl | EnumDecl | VarDecl | Statement
+  Decl        = FuncDecl | EnumDecl | StructDecl | InterfaceDecl | ImplDecl | VarDecl | Statement
 
   FuncDecl    = "fn" id "(" ListOf<Param, ","> ")" "{" Statement* "}"
   Param       = id
@@ -4273,6 +4275,7 @@ TEMP_JS {
               | IndexAssign
               | CompoundAssign
               | IncrDecr
+              | FieldAssign
               | Assign
               | Print
               | IfStmt
@@ -4287,6 +4290,7 @@ TEMP_JS {
   IndexAssign    = id "[" Exp "]" "=" Exp
   CompoundAssign = id ("+=" | "-=") Exp
   IncrDecr       = id ("++" | "--")
+  FieldAssign    = id "." id "=" Exp
   Assign         = id "=" Exp
   Print       = "print" "(" Exp ")"
   IfStmt      = "if" Exp "{" Statement* "}" "else" "{" Statement* "}" -- long
@@ -4295,6 +4299,10 @@ TEMP_JS {
   WhileStmt   = "while" Exp "{" Statement* "}"
   ForStmt     = "for" id "in" Exp "{" Statement* "}"
   EnumDecl    = "enum" id "{" id+ "}"
+  StructDecl    = "struct" id "{" id+ "}"
+  InterfaceDecl = "interface" id "{" MethodSig* "}"
+  MethodSig     = "fn" id "(" ListOf<Param, ","> ")"
+  ImplDecl      = "impl" id "for" id "{" FuncDecl* "}"
   MatchStmt   = "match" Exp "{" MatchArm+ "}"
   MatchArm    = MatchPattern "=>" "{" Statement* "}"
   MatchPattern = "_"       -- wildcard
@@ -4322,9 +4330,13 @@ TEMP_JS {
               | "[" ListOf<Exp, ","> "]"     -- array
               | literal
               | id "(" ListOf<Exp, ","> ")"  -- call
+              | id "." id "(" ListOf<Exp, ","> ")"  -- methodcall
               | id "." id                    -- member
+              | id "{" NonemptyListOf<FieldInit, ","> "}" -- structlit
               | id                           -- id
               | "(" Exp ")"                  -- parens
+
+  FieldInit   = id ":" Exp
 
   relop       = "<=" | ">=" | "==" | "!=" | "<" | ">"
   addop       = "+" | "-"
@@ -4332,7 +4344,7 @@ TEMP_JS {
   prefixop    = "-" | "!"
 
   id          = ~keyword letter (alnum | "_")*
-  keyword     = ("fn" | "let" | "mut" | "if" | "else" | "while" | "for" | "in" | "return" | "break" | "print" | "true" | "false" | "match" | "enum") ~(alnum | "_")
+  keyword     = ("fn" | "let" | "mut" | "struct" | "interface" | "impl" | "if" | "else" | "while" | "for" | "in" | "return" | "break" | "print" | "true" | "false" | "match" | "enum") ~(alnum | "_")
   literal     = num | fstring | string | true | false
   num         = digit+ ("." digit+)?
   fstring     = "f\"" (~"\"" any)* "\""
@@ -4340,7 +4352,7 @@ TEMP_JS {
   true        = "true"
   false       = "false"
 
-  space      += "#" (~"\n" any)* "\n"?  -- comment
+  space      += "#" (~"\n" any)* "\n"?  -- comments
 }
 `;
 
@@ -4357,6 +4369,22 @@ semantics.addOperation("ast", {
   },
   EnumDecl(_enum, name, _open, variants, _close) {
     return n("EnumDecl", { name: name.ast().name, variants: variants.children.map((v) => v.ast().name) });
+  },
+  StructDecl(_struct, name, _open, fields, _close) {
+    return n("StructDecl", { name: name.ast().name, fields: fields.children.map((f) => f.ast().name) });
+  },
+  InterfaceDecl(_interface, name, _open, sigs, _close) {
+    return n("InterfaceDecl", { name: name.ast().name, methods: sigs.children.map((s) => s.ast()) });
+  },
+  MethodSig(_fn, name, _open, params, _close) {
+    return { name: name.ast().name, paramCount: params.asIteration().children.length };
+  },
+  ImplDecl(_impl, structId, _for, ifaceId, _open, funcs, _close) {
+    return n("ImplDecl", {
+      structName: structId.ast().name,
+      interfaceName: ifaceId.ast().name,
+      methods: funcs.children.map((f) => f.ast())
+    });
   },
   FuncDecl(_fn, name, _open, params, _close, _openb, stmts, _closeb) {
     const pname = name.ast().name;
@@ -4423,6 +4451,9 @@ semantics.addOperation("ast", {
   IndexAssign(id, _open, index, _close, _eq, value) {
     return n("IndexAssign", { target: id.ast().name, index: index.ast(), value: value.ast() });
   },
+  FieldAssign(obj, _dot, field, _eq, value) {
+    return n("FieldAssign", { object: obj.ast().name, field: field.ast().name, value: value.ast() });
+  },
   ReturnStmt(_ret, expOpt) {
     const expr = expOpt.children.length ? expOpt.children[0].ast() : null;
     return n("Return", { expr });
@@ -4486,8 +4517,17 @@ semantics.addOperation("ast", {
     const argList = args.asIteration().children.map((c) => c.ast());
     return n("Call", { callee: id.ast().name, args: argList });
   },
+  Exp7_methodcall(obj, _dot, method, _open, args, _close) {
+    return n("MethodCall", { object: obj.ast().name, method: method.ast().name, args: args.asIteration().children.map((a) => a.ast()) });
+  },
   Exp7_member(obj, _dot, member) {
     return n("MemberAccess", { object: obj.ast().name, member: member.ast().name });
+  },
+  Exp7_structlit(id, _open, fields, _close) {
+    return n("StructLiteral", { name: id.ast().name, fields: fields.asIteration().children.map((f) => f.ast()) });
+  },
+  FieldInit(name, _colon, value) {
+    return { name: name.ast().name, value: value.ast() };
   },
   Exp7_id(id) {
     return id.ast();
@@ -4571,11 +4611,27 @@ function analyze(ast) {
   }
   const funcSigs = /* @__PURE__ */ Object.create(null);
   const enumRegistry = /* @__PURE__ */ Object.create(null);
+  const structRegistry = /* @__PURE__ */ Object.create(null);
+  const interfaceRegistry = /* @__PURE__ */ Object.create(null);
+  const implRegistry = /* @__PURE__ */ Object.create(null);
   for (const node of ast.body) {
     if (node.type === "FunctionDecl") {
       funcSigs[node.name] = { paramCount: node.params.length, returnType: UNKNOWN };
     } else if (node.type === "EnumDecl") {
       enumRegistry[node.name] = new Set(node.variants);
+    } else if (node.type === "StructDecl") {
+      structRegistry[node.name] = new Set(node.fields);
+    } else if (node.type === "InterfaceDecl") {
+      const methods = /* @__PURE__ */ new Map();
+      for (const m of node.methods) methods.set(m.name, m.paramCount);
+      interfaceRegistry[node.name] = methods;
+    } else if (node.type === "ImplDecl") {
+      const methods = /* @__PURE__ */ new Map();
+      for (const m of node.methods) {
+        methods.set(m.name, m.params.length);
+        funcSigs[`${node.structName}$$${m.name}`] = { paramCount: m.params.length, returnType: UNKNOWN };
+      }
+      implRegistry[node.structName] = { interfaceName: node.interfaceName, methods };
     }
   }
   function inferType(expr, env) {
@@ -4656,15 +4712,73 @@ function analyze(ast) {
       }
       case "MemberAccess": {
         const enumDef = enumRegistry[expr.object];
-        if (!enumDef) {
-          report(`Undeclared enum '${expr.object}'`, expr);
+        if (enumDef) {
+          if (!enumDef.has(expr.member)) {
+            report(`Enum '${expr.object}' has no variant '${expr.member}'`, expr);
+            return null;
+          }
+          return expr.object;
+        }
+        const varInfo = env[expr.object];
+        if (!varInfo) {
+          report(`Undeclared variable or enum '${expr.object}'`, expr);
           return null;
         }
-        if (!enumDef.has(expr.member)) {
-          report(`Enum '${expr.object}' has no variant '${expr.member}'`, expr);
+        if (varInfo.type === UNKNOWN) return UNKNOWN;
+        const structDef = structRegistry[varInfo.type];
+        if (!structDef) {
+          report(`Cannot access field '${expr.member}' on non-struct type '${varInfo.type}'`, expr);
           return null;
         }
-        return expr.object;
+        if (!structDef.has(expr.member)) {
+          report(`Struct '${varInfo.type}' has no field '${expr.member}'`, expr);
+          return null;
+        }
+        return UNKNOWN;
+      }
+      case "StructLiteral": {
+        const structDef = structRegistry[expr.name];
+        if (!structDef) {
+          report(`Undeclared struct '${expr.name}'`, expr);
+          return null;
+        }
+        const provided = new Set(expr.fields.map((f) => f.name));
+        for (const field of structDef) {
+          if (!provided.has(field)) {
+            report(`Missing field '${field}' in struct literal '${expr.name}'`, expr);
+          }
+        }
+        for (const f of expr.fields) {
+          if (!structDef.has(f.name)) {
+            report(`Unknown field '${f.name}' in struct '${expr.name}'`, expr);
+          }
+          inferType(f.value, env);
+        }
+        return expr.name;
+      }
+      case "MethodCall": {
+        const varInfo = env[expr.object];
+        if (!varInfo) {
+          report(`Undeclared variable '${expr.object}'`, expr);
+          return null;
+        }
+        if (varInfo.type !== UNKNOWN) {
+          const impl = implRegistry[varInfo.type];
+          if (!impl) {
+            report(`Type '${varInfo.type}' has no impl`, expr);
+            return null;
+          }
+          if (!impl.methods.has(expr.method)) {
+            report(`'${varInfo.type}' has no method '${expr.method}'`, expr);
+            return null;
+          }
+          const expectedArgs = impl.methods.get(expr.method);
+          if (expr.args.length !== expectedArgs) {
+            report(`'${expr.method}' expects ${expectedArgs} argument(s), got ${expr.args.length}`, expr);
+          }
+        }
+        for (const arg of expr.args) inferType(arg, env);
+        return UNKNOWN;
       }
       case "Call": {
         const builtin = BUILTINS[expr.callee];
@@ -4784,6 +4898,23 @@ function analyze(ast) {
           }
           break;
         }
+        case "FieldAssign": {
+          const info = env[s.object];
+          if (!info) {
+            report(`Assignment to undeclared variable '${s.object}'`, s);
+          } else if (info.kind === "let") {
+            report(`Cannot modify field of immutable variable '${s.object}' (declared with 'let')`, s);
+          } else if (info.type !== UNKNOWN) {
+            const structDef = structRegistry[info.type];
+            if (!structDef) {
+              report(`'${s.object}' is not a struct`, s);
+            } else if (!structDef.has(s.field)) {
+              report(`Struct '${info.type}' has no field '${s.field}'`, s);
+            }
+          }
+          inferType(s.value, env);
+          break;
+        }
         case "IndexAssign": {
           const info = env[s.target];
           if (!info) {
@@ -4885,7 +5016,32 @@ function analyze(ast) {
         funcEnv[p.name] = { kind: "let", type: UNKNOWN };
       }
       walkStmts(top.body || [], funcEnv, false, { name: top.name });
-    } else if (top.type === "EnumDecl") {
+    } else if (top.type === "EnumDecl" || top.type === "StructDecl" || top.type === "InterfaceDecl") {
+    } else if (top.type === "ImplDecl") {
+      if (!structRegistry[top.structName]) {
+        report(`'impl' references undeclared struct '${top.structName}'`, top);
+      }
+      const iface = interfaceRegistry[top.interfaceName];
+      if (!iface) {
+        report(`'impl' references undeclared interface '${top.interfaceName}'`, top);
+      } else {
+        for (const [methodName, paramCount] of iface) {
+          const implMethod = top.methods.find((m) => m.name === methodName);
+          if (!implMethod) {
+            report(`'${top.structName}' is missing method '${methodName}' required by '${top.interfaceName}'`, top);
+          } else if (implMethod.params.length !== paramCount) {
+            report(`Method '${methodName}' requires ${paramCount} param(s) but implementation has ${implMethod.params.length}`, top);
+          }
+        }
+      }
+      for (const method of top.methods) {
+        const funcEnv = Object.create(globalEnv);
+        funcEnv["self"] = { kind: "let", type: top.structName };
+        for (const p of method.params || []) {
+          funcEnv[p.name] = { kind: "let", type: UNKNOWN };
+        }
+        walkStmts(method.body || [], funcEnv, false, { name: `${top.structName}$$${method.name}` });
+      }
     } else {
       walkStmts([top], globalEnv, false, null);
     }
@@ -5117,6 +5273,7 @@ function optimize(node) {
 function indent(n2) {
   return "  ".repeat(n2);
 }
+var _structImpls = /* @__PURE__ */ new Set();
 function emitExpr(expr, level = 0) {
   switch (expr.type) {
     case "Literal":
@@ -5137,6 +5294,12 @@ function emitExpr(expr, level = 0) {
       return `${emitExpr(expr.array)}[${emitExpr(expr.index)}]`;
     case "MemberAccess":
       return `${expr.object}.${expr.member}`;
+    case "StructLiteral": {
+      const fieldsStr = expr.fields.map((f) => `${f.name}: ${emitExpr(f.value)}`).join(", ");
+      return _structImpls.has(expr.name) ? `make_${expr.name}({ ${fieldsStr} })` : `{ ${fieldsStr} }`;
+    }
+    case "MethodCall":
+      return `${expr.object}.${expr.method}(${expr.args.map((a) => emitExpr(a)).join(", ")})`;
     case "FString": {
       const content = expr.parts.map(
         (p) => p.type === "FStringText" ? p.value : "${" + emitExpr(p.expr) + "}"
@@ -5184,6 +5347,8 @@ ${indent(level)}}`;
       return stmt.expr ? `${indent(level)}return ${emitExpr(stmt.expr)};` : `${indent(level)}return;`;
     case "Break":
       return `${indent(level)}break;`;
+    case "FieldAssign":
+      return `${indent(level)}${stmt.object}.${stmt.field} = ${emitExpr(stmt.value)};`;
     case "IndexAssign":
       return `${indent(level)}${stmt.target}[${emitExpr(stmt.index)}] = ${emitExpr(stmt.value)};`;
     case "For": {
@@ -5243,10 +5408,27 @@ function hasRangeCall(nodes) {
 }
 function generateJS(ast) {
   if (!ast || ast.type !== "Program") throw new Error("Invalid AST for codegen");
+  _structImpls = new Set(ast.body.filter((n2) => n2.type === "ImplDecl").map((n2) => n2.structName));
   const parts = [];
   if (hasRangeCall(ast.body)) parts.push(RANGE_HELPER);
   for (const node of ast.body) {
-    if (node.type === "EnumDecl") {
+    if (node.type === "StructDecl" || node.type === "InterfaceDecl") {
+    } else if (node.type === "ImplDecl") {
+      const methods = node.methods.map((m) => {
+        const params = m.params.map((p) => p.name).join(", ");
+        const body = m.body.map((s) => emitStmt(s, 2)).join("\n");
+        return `  ${m.name}(${params}) {
+${body}
+  }`;
+      }).join(",\n");
+      parts.push(`function make_${node.structName}(fields) {
+  const self = fields;
+  Object.assign(fields, {
+${methods}
+  });
+  return fields;
+}`);
+    } else if (node.type === "EnumDecl") {
       const pairs = node.variants.map((v) => `${v}: "${v}"`).join(", ");
       parts.push(`const ${node.name} = Object.freeze({ ${pairs} });`);
     } else if (node.type === "FunctionDecl") {

@@ -1,4 +1,6 @@
-// grammar.js
+// Used to workaround website dependencies so webpage can compile and run TEMP_JS code
+
+
 export const grammarText = String.raw`
 TEMP_JS {
   Program     = Decl+
